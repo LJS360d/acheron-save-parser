@@ -1,14 +1,16 @@
 # Makefile
+ifeq ($(OS),Windows_NT)
+	EXE := .exe
+  DEL = del /f
+else
+	EXE :=
+  DEL = rm -f
+endif
 BUILD_DIR 		= bin
 BINARY_NAME 	= acheron-save-parser
-BUILDPATH 		= $(BUILD_DIR)/$(BINARY_NAME)
+BUILDPATH 		= $(BUILD_DIR)/$(BINARY_NAME)$(EXE)
 MAIN_PACKAGE 	= ./cmd
 
-ifeq ($(OS),Windows_NT)
-    DEL = del /f
-else
-    DEL = rm -f
-endif
 
 all: build
 
