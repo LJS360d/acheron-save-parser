@@ -16,15 +16,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	sf, err := NewGen3Save(os.Args[1])
+	_, err := NewGen3Save(os.Args[1])
 	if err != nil {
 		fmt.Printf("Error loading save file: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s (%s)\n", sf.name, sf.gender)
+	/* fmt.Printf("%s (%s)\n", sf.name, sf.gender)
 	fmt.Println(sf.teamcount)
 	for _, pkm := range sf.team {
 		fmt.Printf("%s Level %d\n", pkm.name, pkm.level)
-	}
+	} */
 }

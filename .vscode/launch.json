@@ -1,0 +1,18 @@
+// .vscode/launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Make Run",
+      "type": "go",
+      "request": "launch",
+      "program": "${workspaceFolder}/cmd", // Adjust to point to your main package
+      "env": {},
+      "args": [
+        "./test/input/pokeemerald.sav"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}
