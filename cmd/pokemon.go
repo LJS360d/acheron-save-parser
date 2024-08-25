@@ -99,6 +99,41 @@ func (p *Pokemon) new(section []byte) {
 	p.specialDefense = binary.LittleEndian.Uint16(section[98:100])
 }
 
+func (p *Pokemon) newBoxed(section []byte) {
+	p.personalityValue = binary.LittleEndian.Uint32(section[0:4])
+	p.otId = binary.LittleEndian.Uint32(section[4:8])
+	p.nickname = readString(section[8:18])
+	// first 3 bits of [18]
+	p.language = section[18] & 0x7 // should always be 2
+	// last 5 bits of [18]
+	p.hiddenNatureModifier = (section[18] >> 3) & 0x1F
+	// first bit of [19]
+	p.isBadEgg = section[19]&0x1 == 1
+	// second bit of [19]
+	p.hasSpecies = section[19]&0x2 == 1
+	// third bit of [19]
+	p.isEgg = section[19]&0x4 == 1
+	// fourth bit of [19]
+	// p.blockBoxRS = section[19] & 0x38
+	// fifth, sixth and seventh bit of [19]
+	p.daysSinceFormChange = section[19] & 0xC0
+	// last bit of [19]
+	// p.unused_13 = section[19]&0x80 == 1
+	p.otName = readString(section[20:28])
+	// first 4 bits of [28]
+	p.markings = section[28] & 0xF
+	// last 4 bits of [28]
+	p.compressedStatus = section[28] & 0xF0
+	p.checksum = binary.LittleEndian.Uint16(section[30:32])
+	// first 14 bits of [32:34]
+	p.hpLost = binary.LittleEndian.Uint16(section[32:34]) & 0x3FFF
+	// second to last 1 bit of [32:34]
+	p.shinyModifier = section[34]&0x80 == 1
+	// last bit of [32:34]
+	// p.unused_1E = section[34]&0x40 == 1
+	p.PokemonData.new(section[32:80], p.otId, p.personalityValue)
+}
+
 func (p *Pokemon) SpeciesName() string {
 	return data.SpeciesName[p.species]
 }

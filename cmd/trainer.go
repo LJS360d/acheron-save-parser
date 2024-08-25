@@ -3,28 +3,47 @@ package main
 import "encoding/binary"
 
 type Trainer struct {
-	name   string // 7 bytes
-	gender string // 1 byte
-	// 1 byte of unused data
-	id        uint32
-	publicId  uint16
-	privateId uint16
-	time      int    // 5 bytes
-	options   []byte // 3 bytes
-	// 4 bytes of GameCode
-	// 4 bytes of SecurityKey
+	name            uint64
+	gender          uint8
+	saveWarpFlags   uint8
+	id              uint32
+	publicId        uint16
+	privateId       uint16
+	playtimeHours   uint16
+	playtimeMinutes uint8
+	playtimeSeconds uint8
+	playTimeVBlanks uint8
+	options         []byte // 3 bytes
+	// Pokedex here (120 bytes)
+	// filler_90 		uint64
+	securityKey uint32
 }
 
 func (t *Trainer) new(section []byte) {
-	t.name = readString(section[0:7])
-	if section[8] == 0 {
-		t.gender = "boy"
-	} else {
-		t.gender = "girl"
-	}
+	t.name = binary.LittleEndian.Uint64(section[0:8])
+	t.gender = section[8]
+	t.saveWarpFlags = section[9]
 	t.id = binary.LittleEndian.Uint32(section[12:16])
 	t.publicId = binary.LittleEndian.Uint16(section[12:14])
 	t.privateId = binary.LittleEndian.Uint16(section[14:16])
-	t.time = int(binary.LittleEndian.Uint32(section[16:20]))
+	t.playtimeHours = binary.LittleEndian.Uint16(section[16:18])
+	t.playtimeMinutes = section[18]
+	t.playtimeSeconds = section[19]
+	t.playTimeVBlanks = section[20]
 	t.options = section[20:23]
+	// skip 0x18:0x90 (used by Pokedex)
+	t.securityKey = binary.LittleEndian.Uint32(section[0xAC : 0xAC+4])
+}
+
+func (t *Trainer) Gender() string {
+	if t.gender == 0 {
+		return "boy"
+	}
+	return "girl"
+}
+
+func (t *Trainer) Name() string {
+	nameBytes := make([]byte, 8)
+	binary.LittleEndian.PutUint64(nameBytes, t.name)
+	return readString(nameBytes)
 }

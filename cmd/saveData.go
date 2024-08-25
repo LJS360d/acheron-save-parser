@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bytes"
 	"encoding/binary"
 	"os"
 )
 
 type SaveData struct {
 	Trainer
+	Pokedex
 	Team
+	Bag
+	PC
 }
 
 func NewSaveData(filename string) (*SaveData, error) {
@@ -47,11 +51,24 @@ func (s *SaveData) processSaveSlot(saveSlot []byte) {
 	trainer.new(sections[0])
 	s.Trainer = trainer
 
+	pokedex := Pokedex{}
+	pokedex.new(sections[0])
+	s.Pokedex = pokedex
+
+	// TODO map data - 0x00 to 0x234 of section 1
+
 	team := Team{}
 	team.new(sections[1])
 	s.Team = team
-}
 
-// TODO bag off section 1
-type Bag struct {
+	bag := Bag{}
+	bag.new(sections[1], trainer.securityKey)
+	s.Bag = bag
+
+	// TODO game state flags - 0x00 to 0x??? of section 2
+	// TODO game specific data - 0x00 to 0x??? of section 3 and 4
+
+	pc := PC{}
+	pc.new(bytes.Join(sections[5:14], nil))
+	s.PC = pc
 }

@@ -21,7 +21,7 @@ func main() {
 		fmt.Printf("Error loading save file: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println(save.pokemon[0].toSDExportFormat())
+	fmt.Println(save.Team.pokemon[0].toSDExportFormat())
 	/* fmt.Printf("%s (%s)\n", sf.name, sf.gender)
 	fmt.Println(sf.teamcount)
 	for _, pkm := range sf.team {
