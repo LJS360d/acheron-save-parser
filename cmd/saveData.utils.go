@@ -34,12 +34,8 @@ func getSaveIndex(data []byte) int {
 }
 
 func getActiveSaveSlot(slot1 []byte, slot2 []byte) []byte {
-	index1 := getSaveIndex(slot1)
-	index2 := getSaveIndex(slot2)
-
-	if index1 < index2 {
+	if getSaveIndex(slot1) < getSaveIndex(slot2) {
 		return slot1
-	} else {
-		return slot2
 	}
+	return slot2
 }

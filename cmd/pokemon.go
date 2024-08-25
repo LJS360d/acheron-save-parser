@@ -3,7 +3,24 @@ package main
 import (
 	"acheron-save-parser/data"
 	"encoding/binary"
+	"fmt"
+	"strings"
 )
+
+type Team struct {
+	size    int
+	pokemon []Pokemon // 600 bytes
+}
+
+func (t *Team) new(section []byte) {
+	// go at offset 0x234 for size
+	t.size = int(binary.LittleEndian.Uint32(section[0x234:0x238]))
+	// between 0x238 and 0x490 is the pokemon data
+	t.pokemon = make([]Pokemon, t.size)
+	for i := 0; i < int(t.size); i++ {
+		t.pokemon[i].new(section[0x238+(i*100) : 0x238+((i+1)*100)])
+	}
+}
 
 type Pokemon struct {
 	personalityValue     uint32
@@ -82,11 +99,69 @@ func (p *Pokemon) new(section []byte) {
 	p.specialDefense = binary.LittleEndian.Uint16(section[98:100])
 }
 
+func (p *Pokemon) SpeciesName() string {
+	return data.SpeciesName[p.species]
+}
+func (p *Pokemon) ItemName() string {
+	return data.ItemName[p.item]
+}
+func (p *Pokemon) AbilityName() string {
+	return data.AbilityName[data.SpeciesAbility[p.species][p.abilityNum]]
+}
+func (p *Pokemon) NatureName() string {
+	return data.NatureName[uint8(p.personalityValue%25)]
+}
+func (p *Pokemon) Nickname() string {
+	return p.nickname + p.nickname11th + p.nickname12th
+}
+func (p *Pokemon) Moves() []string {
+	var moves []string
+	moves = append(moves, data.MoveName[p.move1])
+	moves = append(moves, data.MoveName[p.move2])
+	moves = append(moves, data.MoveName[p.move3])
+	moves = append(moves, data.MoveName[p.move4])
+	return moves
+}
+func (p *Pokemon) toSDExportFormat() string {
+	var sb strings.Builder
+	// Print Pokémon name and item
+	if p.nickname != "" {
+		if p.ItemName() != "None" {
+			sb.WriteString(fmt.Sprintf("\t%s (%s) @ %s\n", p.Nickname(), p.SpeciesName(), p.ItemName()))
+		} else {
+			sb.WriteString(fmt.Sprintf("\t%s (%s)\n", p.Nickname(), p.SpeciesName()))
+		}
+	} else {
+		if p.ItemName() != "None" {
+			sb.WriteString(fmt.Sprintf("\t%s @ %s\n", p.SpeciesName(), p.ItemName()))
+		} else {
+			sb.WriteString(fmt.Sprintf("\t%s\n", p.SpeciesName()))
+		}
+	}
+	// Print Ability
+	sb.WriteString(fmt.Sprintf("\tAbility: %s\n", p.AbilityName()))
+	// Print Level
+	sb.WriteString(fmt.Sprintf("\tLevel: %d\n", p.level))
+	// Print EVs
+	sb.WriteString(fmt.Sprintf("\tEVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
+		p.hpEv, p.atkEv, p.defEv, p.speEv, p.spaEv, p.spdEv))
+	// Print Nature
+	sb.WriteString(fmt.Sprintf("\t%s Nature\n", p.NatureName()))
+	// Print IVs
+	sb.WriteString(fmt.Sprintf("\tIVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
+		p.hpIv, p.atkIv, p.defIv, p.speIv, p.spaIv, p.spdIv))
+	// Print Moves
+	sb.WriteString("\t- ")
+	moves := p.Moves()
+	sb.WriteString(strings.Join(moves, "\n\t- "))
+	return sb.String()
+}
+
 // 48 bytes (by default)
 // 12 bytes * 4 sections
 type PokemonData struct {
 	// G section
-	species  string // 11 bits
+	species  uint16 // 11 bits
 	teraType uint16 // 5 bits
 	item     uint16 // 10 bits
 	// unused_02  uint16 // 6 bits
@@ -169,7 +244,6 @@ type PokemonData struct {
 	// unused_0B      bool // 1 bit
 	abilityNum             uint8 // 2 bits
 	modernFatefulEncounter bool  // 1 bit;
-
 }
 
 func (p *PokemonData) new(data []byte, otId uint32, personalityValue uint32) {
@@ -193,7 +267,7 @@ func (p *PokemonData) new(data []byte, otId uint32, personalityValue uint32) {
 
 func (p *PokemonData) parseGSection(section []byte) {
 	// first 11 bits
-	p.species = data.SpeciesName[binary.LittleEndian.Uint16(section[0:2])&0x7FF]
+	p.species = binary.LittleEndian.Uint16(section[0:2]) & 0x7FF
 	// last 5 bits
 	p.teraType = binary.LittleEndian.Uint16(section[0:2]) & 0x1F
 	// first 10 bits

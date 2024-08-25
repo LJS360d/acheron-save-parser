@@ -16,12 +16,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	_, err := NewGen3Save(os.Args[1])
+	save, err := NewSaveData(os.Args[1])
 	if err != nil {
 		fmt.Printf("Error loading save file: %v\n", err)
 		os.Exit(1)
 	}
-
+	fmt.Println(save.pokemon[0].toSDExportFormat())
 	/* fmt.Printf("%s (%s)\n", sf.name, sf.gender)
 	fmt.Println(sf.teamcount)
 	for _, pkm := range sf.team {
