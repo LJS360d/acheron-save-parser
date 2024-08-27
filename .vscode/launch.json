@@ -9,7 +9,7 @@
       "program": "${workspaceFolder}/cmd", // Adjust to point to your main package
       "env": {},
       "args": [
-        "./test/input/pokeemerald.sav"
+        "./test/input/pokeemerald_2.sav"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"

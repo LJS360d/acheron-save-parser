@@ -4,6 +4,7 @@ import (
 	"acheron-save-parser/data"
 	"encoding/binary"
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -132,6 +133,8 @@ func (p *Pokemon) newBoxed(section []byte) {
 	// last bit of [32:34]
 	// p.unused_1E = section[34]&0x40 == 1
 	p.PokemonData.new(section[32:80], p.otId, p.personalityValue)
+	// calculate the level using experience and experienceGroup
+	p.level = uint8(calculateLevel(int(p.experience), p.ExperienceGroup()))
 }
 
 func (p *Pokemon) SpeciesName() string {
@@ -149,6 +152,9 @@ func (p *Pokemon) NatureName() string {
 func (p *Pokemon) Nickname() string {
 	return p.nickname + p.nickname11th + p.nickname12th
 }
+func (p *Pokemon) ExperienceGroup() int {
+	return data.ExperienceGroup[p.species]
+}
 func (p *Pokemon) Moves() []string {
 	var moves []string
 	moves = append(moves, data.MoveName[p.move1])
@@ -157,7 +163,7 @@ func (p *Pokemon) Moves() []string {
 	moves = append(moves, data.MoveName[p.move4])
 	return moves
 }
-func (p *Pokemon) toSDExportFormat() string {
+func (p *Pokemon) SDExportFormat() string {
 	var sb strings.Builder
 	// Print Pokémon name and item
 	if p.nickname != "" {
@@ -190,6 +196,49 @@ func (p *Pokemon) toSDExportFormat() string {
 	moves := p.Moves()
 	sb.WriteString(strings.Join(moves, "\n\t- "))
 	return sb.String()
+}
+
+func calculateLevel(experience int, experienceGroup int) int {
+	for level := 1; level <= 100; level++ {
+		expRequired := experienceForLevel(level+1, experienceGroup)
+		if expRequired > experience {
+			return level
+		}
+	}
+	return 100 // If experience is higher than required for level 100
+}
+
+func experienceForLevel(level int, experienceGroup int) int {
+	switch experienceGroup {
+	case 0: // Medium Fast
+		return level * level * level
+	case 1: // Erratic
+		if level <= 50 {
+			return level * level * level * (100 - level) / 50
+		} else if level <= 68 {
+			return level * level * level * (150 - level) / 100
+		} else if level <= 98 {
+			return level * level * level * int((1911-level*10)/3) / 500
+		} else {
+			return level * level * level * (160 - level) / 100
+		}
+	case 2: // Fluctuating
+		if level <= 15 {
+			return level * level * level * ((level+1)/3 + 24) / 50
+		} else if level <= 36 {
+			return level * level * level * (level + 14) / 50
+		} else {
+			return level * level * level * (level/2 + 32) / 50
+		}
+	case 3: // Medium Slow
+		return int(math.Round(float64(6*level*level*level)/5 - float64(15*level*level) + float64(100*level) - 140))
+	case 4: // Fast
+		return 4 * level * level * level / 5
+	case 5: // Slow
+		return 5 * level * level * level / 4
+	default:
+		return 0 // Invalid group
+	}
 }
 
 // 48 bytes (by default)
