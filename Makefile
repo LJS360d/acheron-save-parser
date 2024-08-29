@@ -7,9 +7,14 @@ else
   DEL = rm -f
 endif
 BUILD_DIR 		= bin
+
 BINARY_NAME 	= acheron-save-parser
 BUILDPATH 		= $(BUILD_DIR)/$(BINARY_NAME)$(EXE)
 MAIN_PACKAGE 	= ./cmd
+
+API_BINARY_NAME 	= acheron-save-parser-api
+API_BUILDPATH 		= $(BUILD_DIR)/$(API_BINARY_NAME)$(EXE)
+API_PACKAGE 	= ./api
 
 
 all: build
@@ -33,5 +38,9 @@ clean:
 
 run: build
 	./$(BUILDPATH)
+
+api: build
+	go build -o $(API_BUILDPATH) $(API_PACKAGE)
+	./$(API_BUILDPATH)
 
 .PHONY: all build test lint staticcheck clean run

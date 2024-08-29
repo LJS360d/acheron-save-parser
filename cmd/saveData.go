@@ -36,6 +36,16 @@ func NewSaveData(filename string) (*SaveData, error) {
 	return save, nil
 }
 
+func DecodeSaveData(data []byte) *SaveData {
+	slot1 := data[0:SAVE_SLOT_SIZE] // 14 sectors
+	// Save slot 2
+	slot2 := data[SAVE_SLOT_SIZE : SAVE_SLOT_SIZE*2] // 14 sectors
+	activeSlot := getActiveSaveSlot(slot1, slot2)
+	save := &SaveData{}
+	save.processSaveSlot(activeSlot)
+	return save
+}
+
 func (s *SaveData) processSaveSlot(saveSlot []byte) {
 	sections := make([][]byte, 14)
 
