@@ -166,10 +166,18 @@ func (p *Pokemon) ExperienceGroup() int {
 }
 func (p *Pokemon) Moves() []string {
 	var moves []string
-	moves = append(moves, data.MoveName[p.move1])
-	moves = append(moves, data.MoveName[p.move2])
-	moves = append(moves, data.MoveName[p.move3])
-	moves = append(moves, data.MoveName[p.move4])
+	if p.move1 != 0 {
+		moves = append(moves, data.MoveName[p.move1])
+	}
+	if p.move2 != 0 {
+		moves = append(moves, data.MoveName[p.move2])
+	}
+	if p.move3 != 0 {
+		moves = append(moves, data.MoveName[p.move3])
+	}
+	if p.move4 != 0 {
+		moves = append(moves, data.MoveName[p.move4])
+	}
 	return moves
 }
 func (p *Pokemon) SDExportFormat() string {
@@ -177,33 +185,28 @@ func (p *Pokemon) SDExportFormat() string {
 	// Print Pokémon name and item
 	if p.nickname != "" {
 		if p.ItemName() != "None" {
-			sb.WriteString(fmt.Sprintf("\t%s (%s) @ %s\n", p.Nickname(), p.SpeciesName(), p.ItemName()))
+			sb.WriteString(fmt.Sprintf("%s (%s) @ %s\n", p.Nickname(), p.SpeciesName(), p.ItemName()))
 		} else {
-			sb.WriteString(fmt.Sprintf("\t%s (%s)\n", p.Nickname(), p.SpeciesName()))
+			sb.WriteString(fmt.Sprintf("%s (%s)\n", p.Nickname(), p.SpeciesName()))
 		}
 	} else {
 		if p.ItemName() != "None" {
-			sb.WriteString(fmt.Sprintf("\t%s @ %s\n", p.SpeciesName(), p.ItemName()))
+			sb.WriteString(fmt.Sprintf("%s @ %s\n", p.SpeciesName(), p.ItemName()))
 		} else {
-			sb.WriteString(fmt.Sprintf("\t%s\n", p.SpeciesName()))
+			sb.WriteString(fmt.Sprintf("%s\n", p.SpeciesName()))
 		}
 	}
-	// Print Ability
-	sb.WriteString(fmt.Sprintf("\tAbility: %s\n", p.AbilityName()))
-	// Print Level
-	sb.WriteString(fmt.Sprintf("\tLevel: %d\n", p.level))
-	// Print EVs
-	sb.WriteString(fmt.Sprintf("\tEVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
+	sb.WriteString(fmt.Sprintf("Level: %d\n", p.level))
+	sb.WriteString(fmt.Sprintf("%s Nature\n", p.NatureName()))
+	sb.WriteString(fmt.Sprintf("Ability: %s\n", p.AbilityName()))
+	sb.WriteString(fmt.Sprintf("EVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
 		p.hpEv, p.atkEv, p.defEv, p.speEv, p.spaEv, p.spdEv))
-	// Print Nature
-	sb.WriteString(fmt.Sprintf("\t%s Nature\n", p.NatureName()))
-	// Print IVs
-	sb.WriteString(fmt.Sprintf("\tIVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
+	sb.WriteString(fmt.Sprintf("IVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
 		p.hpIv, p.atkIv, p.defIv, p.speIv, p.spaIv, p.spdIv))
 	// Print Moves
-	sb.WriteString("\t- ")
+	sb.WriteString("- ")
 	moves := p.Moves()
-	sb.WriteString(strings.Join(moves, "\n\t- "))
+	sb.WriteString(strings.Join(moves, "\n- "))
 	return sb.String()
 }
 
