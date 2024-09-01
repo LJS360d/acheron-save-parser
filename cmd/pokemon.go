@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"syscall/js"
 )
 
 type Team struct {
@@ -21,6 +22,14 @@ func (t *Team) new(section []byte) {
 	for i := 0; i < int(t.size); i++ {
 		t.pokemon[i].new(section[0x238+(i*100) : 0x238+((i+1)*100)])
 	}
+}
+
+func (t *Team) toJS() js.Value {
+	jsMons := make([]js.Value, t.size)
+	for i, value := range t.pokemon {
+		jsMons[i] = value.ToJS()
+	}
+	return toJSArray(jsMons)
 }
 
 type Pokemon struct {
@@ -196,6 +205,21 @@ func (p *Pokemon) SDExportFormat() string {
 	moves := p.Moves()
 	sb.WriteString(strings.Join(moves, "\n\t- "))
 	return sb.String()
+}
+
+func (p *Pokemon) ToJS() js.Value {
+	if p.SpeciesName() == "None" {
+		return js.Null()
+	}
+	return js.ValueOf(map[string]interface{}{
+		"nickname": p.Nickname(),
+		"species":  p.SpeciesName(),
+		"item":     p.ItemName(),
+		"level":    p.level,
+		"toSDExportFormat": js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			return p.SDExportFormat()
+		}),
+	})
 }
 
 func calculateLevel(experience int, experienceGroup int) int {

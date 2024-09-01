@@ -1,6 +1,9 @@
 package main
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"syscall/js"
+)
 
 type Trainer struct {
 	name            uint64
@@ -33,6 +36,23 @@ func (t *Trainer) new(section []byte) {
 	t.options = section[20:23]
 	// skip 0x18:0x90 (used by Pokedex)
 	t.securityKey = binary.LittleEndian.Uint32(section[0xAC : 0xAC+4])
+}
+
+func (t *Trainer) toJS() js.Value {
+	return js.ValueOf(map[string]interface{}{
+		"name":   t.Name(),
+		"gender": t.Gender(),
+		// "saveWarpFlags":   t.saveWarpFlags,
+		"id": t.id,
+		// "publicId":        t.publicId,
+		// "privateId":       t.privateId,
+		"playtimeHours":   t.playtimeHours,
+		"playtimeMinutes": t.playtimeMinutes,
+		"playtimeSeconds": t.playtimeSeconds,
+		// "playTimeVBlanks": t.playTimeVBlanks,
+		// "options":         t.options,
+		// "securityKey":     t.securityKey,
+	})
 }
 
 func (t *Trainer) Gender() string {

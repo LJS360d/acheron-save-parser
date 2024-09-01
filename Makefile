@@ -1,26 +1,30 @@
-# Makefile
 ifeq ($(OS),Windows_NT)
 	EXE := .exe
-  DEL = del /f
+	DEL := del /f
+	SET_ENV := set
+	SEP := &
 else
 	EXE :=
-  DEL = rm -f
+	DEL := rm -f
+	SET_ENV :=
+	SEP := ;
 endif
-BUILD_DIR 		= bin
 
+BUILD_DIR 		= bin
 BINARY_NAME 	= acheron-save-parser
 BUILDPATH 		= $(BUILD_DIR)/$(BINARY_NAME)$(EXE)
 MAIN_PACKAGE 	= ./cmd
 
-API_BINARY_NAME 	= acheron-save-parser-api
-API_BUILDPATH 		= $(BUILD_DIR)/$(API_BINARY_NAME)$(EXE)
-API_PACKAGE 	= ./api
+WASM_BINARY_NAME 	= main.wasm
+WASM_BUILDPATH 		= ../docs/public/$(WASM_BINARY_NAME)
 
-
-all: build
+all: build-wasm
 
 build:
 	go build -o $(BUILDPATH) $(MAIN_PACKAGE)
+
+build-wasm:
+	$(SET_ENV) GOOS=js$(SEP) $(SET_ENV) GOARCH=wasm$(SEP) go build -o $(WASM_BUILDPATH) $(MAIN_PACKAGE)
 
 test:
 	go test -coverprofile=coverage.out ./...
@@ -29,18 +33,12 @@ test:
 lint:
 	go fmt ./...
 
-staticcheck:
-	staticcheck ./...
-
 clean:
 	go clean
-	$(DEL) $(BINARY_NAME)
+	$(DEL) $(BUILDPATH)
+	$(DEL) $(WASM_BUILDPATH)
 
 run: build
 	./$(BUILDPATH)
 
-api: build
-	go build -o $(API_BUILDPATH) $(API_PACKAGE)
-	./$(API_BUILDPATH)
-
-.PHONY: all build test lint staticcheck clean run
+.PHONY: all build build-wasm test lint clean run
