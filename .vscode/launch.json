@@ -3,13 +3,14 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Make Run",
+      "name": "Run Go (Debug)",
       "type": "go",
       "request": "launch",
-      "program": "${workspaceFolder}/cmd", // Adjust to point to your main package
+      "program": "${workspaceFolder}/cmd",
       "env": {},
       "args": [
-        "./test/input/pokeemerald_2.sav"
+        "-sav=./test/input/pokeemerald_2.sav",
+        "-gba=./test/input/pokeemerald.gba",
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"

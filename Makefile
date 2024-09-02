@@ -17,6 +17,7 @@ MAIN_PACKAGE 	= ./cmd
 
 WASM_BINARY_NAME 	= main.wasm
 WASM_BUILDPATH 		= ../docs/public/$(WASM_BINARY_NAME)
+WASM_MAIN_PACKAGE 	= ./export
 
 all: build-wasm
 
@@ -24,7 +25,7 @@ build:
 	go build -o $(BUILDPATH) $(MAIN_PACKAGE)
 
 build-wasm:
-	$(SET_ENV) GOOS=js$(SEP) $(SET_ENV) GOARCH=wasm$(SEP) go build -o $(WASM_BUILDPATH) $(MAIN_PACKAGE)
+	$(SET_ENV) GOOS=js$(SEP) $(SET_ENV) GOARCH=wasm$(SEP) go build -o $(WASM_BUILDPATH) $(WASM_MAIN_PACKAGE)
 
 test:
 	go test -coverprofile=coverage.out ./...
