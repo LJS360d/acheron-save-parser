@@ -1,6 +1,7 @@
 package gba
 
 import (
+	"acheron-save-parser/sav"
 	"encoding/binary"
 	"fmt"
 )
@@ -124,12 +125,12 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		MovesCount:     binary.LittleEndian.Uint16(data[0x20E:0x210]),
 		SpeciesCount:   binary.LittleEndian.Uint16(data[0x210:0x212]),
 		AbilitiesCount: binary.LittleEndian.Uint16(data[0x212:0x214]),
-		AbilitiesPtr:   binary.LittleEndian.Uint32(data[0x214:0x218]),
+		AbilitiesPtr:   binary.LittleEndian.Uint32(data[0x214:0x218]) - 0x08000000,
 		ItemsCount:     binary.LittleEndian.Uint16(data[0x218:0x21A]),
 		ItemNameLength: data[0x21A],
 	}
-	/* abilities := ParseAbilitiesBytes(data, int(g.AbilitiesOffset), int(g.AbilitiesCount))
-	fmt.Println(abilities) */
+	abilities := ParseAbilitiesBytes(data, int(g.AbilitiesPtr), int(g.AbilitiesCount))
+	fmt.Println(abilities)
 	return g
 }
 
@@ -137,8 +138,8 @@ func ParseAbilitiesBytes(data []byte /* 7464 Bytes */, offset int, count int) []
 	abilities := make([]*AbilityData, count)
 	for i := 0; i < count; i++ {
 		a := &AbilityData{}
-		a.new(data[offset+i*32 : offset+i*32+32])
-		abilities = append(abilities, a)
+		a.new_name16(data[offset+i*26 : offset+i*26+26])
+		abilities[i] = a
 	}
 	return abilities
 }
@@ -156,15 +157,30 @@ type AbilityData struct {
 	failsOnImposter   bool
 }
 
-func (a *AbilityData) new(section []byte) {
-	a.Name = string(section[0:20])
+func (a *AbilityData) new_name12(section []byte /* 22 bytes */) {
+	a.Name = sav.ReadString(section[0:13])
+	// 3 bytes of padding for the pointer boundary
+	a.DescriptionPtr = binary.LittleEndian.Uint32(section[16:20])
+	a.aiRating = int8(section[20])
+	a.cantBeCopied = section[21]&0x1 == 1
+	a.cantBeSwapped = section[21]&0x2 == 1
+	a.cantBeTraced = section[21]&0x4 == 1
+	a.cantBeSuppressed = section[21]&0x8 == 1
+	a.cantBeOverwritten = section[21]&0x10 == 1
+	a.breakable = section[21]&0x20 == 1
+	a.failsOnImposter = section[21]&0x40 == 1
+}
+
+func (a *AbilityData) new_name16(section []byte /* 26 bytes */) {
+	a.Name = sav.ReadString(section[0:18])
+	// 2 bytes of padding for the pointer boundary
 	a.DescriptionPtr = binary.LittleEndian.Uint32(section[20:24])
 	a.aiRating = int8(section[24])
-	a.cantBeCopied = section[25]&0x1 == 1
-	a.cantBeSwapped = section[25]&0x2 == 1
-	a.cantBeTraced = section[25]&0x4 == 1
-	a.cantBeSuppressed = section[25]&0x8 == 1
-	a.cantBeOverwritten = section[25]&0x10 == 1
-	a.breakable = section[25]&0x20 == 1
-	a.failsOnImposter = section[25]&0x40 == 1
+	a.cantBeCopied = section[25]&0x1 == 0x1
+	a.cantBeSwapped = section[25]&0x2 == 0x2
+	a.cantBeTraced = section[25]&0x4 == 0x4
+	a.cantBeSuppressed = section[25]&0x8 == 0x8
+	a.cantBeOverwritten = section[25]&0x10 == 0x10
+	a.breakable = section[25]&0x20 == 0x20
+	a.failsOnImposter = section[25]&0x40 == 0x40
 }
