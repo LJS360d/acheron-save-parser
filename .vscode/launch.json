@@ -9,8 +9,8 @@
       "program": "${workspaceFolder}/cmd",
       "env": {},
       "args": [
-        "-sav=./test/input/pokeemerald_2.sav",
-        "-gba=./test/input/pokeemerald.gba",
+        "-sav=./test/sav/pokeemerald_2.sav",
+        "-gba=./test/gba/pokeemerald.gba",
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"

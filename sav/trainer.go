@@ -47,5 +47,5 @@ func (t *Trainer) Gender() string {
 func (t *Trainer) Name() string {
 	nameBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(nameBytes, t.name)
-	return ReadString(nameBytes)
+	return DecodeGFString(nameBytes)
 }

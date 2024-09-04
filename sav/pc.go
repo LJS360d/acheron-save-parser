@@ -16,5 +16,5 @@ func (pc *PC) new(section []byte) {
 		ix := 0x0004 + i*80
 		pc.Pokemon[i].newBoxed(section[ix : ix+80])
 	}
-	pc.BoxNames = ReadString(section[0x8344:0x83C2])
+	pc.BoxNames = DecodeGFString(section[0x8344:0x83C2])
 }

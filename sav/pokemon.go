@@ -58,7 +58,7 @@ type Pokemon struct {
 func (p *Pokemon) new(section []byte) {
 	p.personalityValue = binary.LittleEndian.Uint32(section[0:4])
 	p.otId = binary.LittleEndian.Uint32(section[4:8])
-	p.nickname = ReadString(section[8:18])
+	p.nickname = DecodeGFString(section[8:18])
 	// first 3 bits of [18]
 	p.language = section[18] & 0x7 // should always be 2
 	// last 5 bits of [18]
@@ -75,7 +75,7 @@ func (p *Pokemon) new(section []byte) {
 	p.daysSinceFormChange = section[19] & 0xC0
 	// last bit of [19]
 	// p.unused_13 = section[19]&0x80 == 1
-	p.otName = ReadString(section[20:28])
+	p.otName = DecodeGFString(section[20:28])
 	// first 4 bits of [28]
 	p.markings = section[28] & 0xF
 	// last 4 bits of [28]
@@ -103,7 +103,7 @@ func (p *Pokemon) new(section []byte) {
 func (p *Pokemon) newBoxed(section []byte) {
 	p.personalityValue = binary.LittleEndian.Uint32(section[0:4])
 	p.otId = binary.LittleEndian.Uint32(section[4:8])
-	p.nickname = ReadString(section[8:18])
+	p.nickname = DecodeGFString(section[8:18])
 	// first 3 bits of [18]
 	p.language = section[18] & 0x7 // should always be 2
 	// last 5 bits of [18]
@@ -120,7 +120,7 @@ func (p *Pokemon) newBoxed(section []byte) {
 	p.daysSinceFormChange = section[19] & 0xC0
 	// last bit of [19]
 	// p.unused_13 = section[19]&0x80 == 1
-	p.otName = ReadString(section[20:28])
+	p.otName = DecodeGFString(section[20:28])
 	// first 4 bits of [28]
 	p.markings = section[28] & 0xF
 	// last 4 bits of [28]
@@ -367,7 +367,7 @@ func (p *PokemonData) parseGSection(section []byte) {
 	// first 21 bits
 	p.experience = binary.LittleEndian.Uint32(section[4:8]) & 0x1FFFFF
 	// the 8 bits after the 21th bit
-	p.nickname11th = ReadString([]byte{byte((binary.LittleEndian.Uint32(section[4:8]) >> 21) & 0xFF)})
+	p.nickname11th = DecodeGFString([]byte{byte((binary.LittleEndian.Uint32(section[4:8]) >> 21) & 0xFF)})
 	// last 3 bits
 	// p.unused_04 = binary.LittleEndian.Uint32(section[4:8]) >> 29
 	p.ppBonuses = section[8]
@@ -375,7 +375,7 @@ func (p *PokemonData) parseGSection(section []byte) {
 	// first 6 bits
 	p.pokeball = binary.LittleEndian.Uint16(section[10:12]) & 0x3F
 	// last 8 bits
-	p.nickname12th = ReadString([]byte{byte((binary.LittleEndian.Uint16(section[10:12]) >> 6) & 0xFF)})
+	p.nickname12th = DecodeGFString([]byte{byte((binary.LittleEndian.Uint16(section[10:12]) >> 6) & 0xFF)})
 	// last 2 bits
 	// p.unused_0A = binary.LittleEndian.Uint16(section[10:12]) >> 14
 }
