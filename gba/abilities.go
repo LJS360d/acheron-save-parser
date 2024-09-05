@@ -37,14 +37,14 @@ func ParseAbilitiesBytes(data []byte, offset int, count int) []*AbilityData {
 		for i := 0; i < count; i++ {
 			a.new_name12(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
 			abilities[i] = a
-			a.Description = ParseAbilityDescription(data, a.DescriptionPtr)
+			a.Description = ParsePointerString(data, a.DescriptionPtr)
 		}
 	} else {
 		abilityInfoSize = ABILITY_INFO_SIZE_LENGTH16
 		for i := 0; i < count; i++ {
 			a.new_name16(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
 			abilities[i] = a
-			a.Description = ParseAbilityDescription(data, a.DescriptionPtr)
+			a.Description = ParsePointerString(data, a.DescriptionPtr)
 		}
 	}
 	return abilities
@@ -76,13 +76,4 @@ func (a *AbilityData) new_name16(section []byte /* 26 + 2 bytes */) {
 	a.breakable = section[25]&0x20 == 0x20
 	a.failsOnImposter = section[25]&0x40 == 0x40
 	// 2 bytes of padding for the pointer boundary
-}
-
-func ParseAbilityDescription(data []byte, offset uint32) string {
-	start := int(offset)
-	end := start
-	for end < len(data) && data[end] != 173 /* 173->GF Encoding->"." */ {
-		end++
-	}
-	return sav.DecodeGFString(data[start : end+1])
 }

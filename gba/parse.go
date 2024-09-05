@@ -12,6 +12,9 @@ const (
 var (
 	Abilities []*AbilityData
 	Species   []*SpeciesData
+	Items     []*ItemData
+	Natures   []*NatureData
+	Moves     []*MoveData
 )
 
 type GbaData struct {
@@ -45,20 +48,20 @@ type GbaData struct {
 	PaletteTablesPtr uint32
 	// MonSpeciesNamesPtr uint32
 	// MoveNamesPtr       uint32
-	DecorationsPtr           uint32
-	FlagsOffset              uint32
-	VarsOffset               uint32
-	PokedexOffset            uint32
-	Seen1Offset              uint32 // seen1 and seen2 are the same ptr
-	Seen2Offset              uint32
-	PokedexVar               uint32 // 0x46 (70)
-	PokedexFlag              uint32 // 0x8E40 (2276)
-	MysteryEventFlag         uint32 // 0x8AC (2220)
-	PokedexCount             uint32 // 1025
-	PlayerNameLength         uint8  // 7
-	TrainerNameLength        uint8  // 10
-	PokemonNameLength1       uint8  // 12
-	PokemonNameLength2       uint8  // 12
+	DecorationsPtr     uint32
+	FlagsOffset        uint32
+	VarsOffset         uint32
+	PokedexOffset      uint32
+	Seen1Offset        uint32 // seen1 and seen2 are the same ptr
+	Seen2Offset        uint32
+	PokedexVar         uint32 // 0x46 (70)
+	PokedexFlag        uint32 // 0x8E40 (2276)
+	MysteryEventFlag   uint32 // 0x8AC (2220)
+	PokedexCount       uint32 // 1025
+	PlayerNameLength   uint8  // 7
+	TrainerNameLength  uint8  // 10
+	PokemonNameLength1 uint8  // 12
+	PokemonNameLength2 uint8  // 12
 	// 12 bytes of unknown use
 	// 3 bytes of padding
 	SaveBlock2Size           uint32 // 0xF2C (3884)
@@ -146,11 +149,11 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		// MonSpeciesNamesPtr: binary.LittleEndian.Uint32(data[0x145:0x14A]),
 		// MoveNamesPtr:       binary.LittleEndian.Uint32(data[0x163:0x16B]),
 		DecorationsPtr:     binary.LittleEndian.Uint32(data[0x14C:0x150]) - POINTER_OFFSET,
-		FlagsOffset:        binary.LittleEndian.Uint32(data[0x150:0x154]) /* - POINTER_OFFSET */,
-		VarsOffset:         binary.LittleEndian.Uint32(data[0x154:0x158]) /* - POINTER_OFFSET */,
-		PokedexOffset:      binary.LittleEndian.Uint32(data[0x158:0x15C]) /* - POINTER_OFFSET */,
-		Seen1Offset:        binary.LittleEndian.Uint32(data[0x15C:0x160]) /* - POINTER_OFFSET */, // seen1 and seen2 are the same ptr
-		Seen2Offset:        binary.LittleEndian.Uint32(data[0x160:0x164]) /* - POINTER_OFFSET */,
+		FlagsOffset:        binary.LittleEndian.Uint32(data[0x150:0x154]), /* - POINTER_OFFSET */
+		VarsOffset:         binary.LittleEndian.Uint32(data[0x154:0x158]), /* - POINTER_OFFSET */
+		PokedexOffset:      binary.LittleEndian.Uint32(data[0x158:0x15C]), /* - POINTER_OFFSET */
+		Seen1Offset:        binary.LittleEndian.Uint32(data[0x15C:0x160]), /* - POINTER_OFFSET */ // seen1 and seen2 are the same ptr
+		Seen2Offset:        binary.LittleEndian.Uint32(data[0x160:0x164]), /* - POINTER_OFFSET */
 		PokedexVar:         binary.LittleEndian.Uint32(data[0x164:0x168]),
 		PokedexFlag:        binary.LittleEndian.Uint32(data[0x168:0x16C]),
 		MysteryEventFlag:   binary.LittleEndian.Uint32(data[0x16C:0x170]),
@@ -164,25 +167,26 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		// 3 bytes of padding
 		SaveBlock2Size:           binary.LittleEndian.Uint32(data[0x188:0x18C]),
 		SaveBlock1Size:           binary.LittleEndian.Uint32(data[0x18C:0x190]),
-		PartyCountOffset:         binary.LittleEndian.Uint32(data[0x190:0x194]) /* - POINTER_OFFSET */,
-		PartyOffset:              binary.LittleEndian.Uint32(data[0x194:0x198]) /* - POINTER_OFFSET */,
-		WarpFlagsOffset:          binary.LittleEndian.Uint32(data[0x198:0x19C]) /* - POINTER_OFFSET */,
-		TrainerIdOffset:          binary.LittleEndian.Uint32(data[0x19C:0x1A0]) /* - POINTER_OFFSET */,
-		PlayerNameOffset:         binary.LittleEndian.Uint32(data[0x1A0:0x1A4]) /* - POINTER_OFFSET */,
-		PlayerGenderOffset:       binary.LittleEndian.Uint32(data[0x1A4:0x1A8]) /* - POINTER_OFFSET */,
-		FrontierStatusOffset:     binary.LittleEndian.Uint32(data[0x1A8:0x1AC]) /* - POINTER_OFFSET */,
-		FrontierStatusOffset2:    binary.LittleEndian.Uint32(data[0x1AC:0x1B0]) /* - POINTER_OFFSET */,
-		ExternalEventFlagsOffset: binary.LittleEndian.Uint32(data[0x1B0:0x1B4]) /* - POINTER_OFFSET */,
-		ExternalEventDataOffset:  binary.LittleEndian.Uint32(data[0x1B4:0x1B8]) /* - POINTER_OFFSET */,
+		PartyCountOffset:         binary.LittleEndian.Uint32(data[0x190:0x194]), /* - POINTER_OFFSET */
+		PartyOffset:              binary.LittleEndian.Uint32(data[0x194:0x198]), /* - POINTER_OFFSET */
+		WarpFlagsOffset:          binary.LittleEndian.Uint32(data[0x198:0x19C]), /* - POINTER_OFFSET */
+		TrainerIdOffset:          binary.LittleEndian.Uint32(data[0x19C:0x1A0]), /* - POINTER_OFFSET */
+		PlayerNameOffset:         binary.LittleEndian.Uint32(data[0x1A0:0x1A4]), /* - POINTER_OFFSET */
+		PlayerGenderOffset:       binary.LittleEndian.Uint32(data[0x1A4:0x1A8]), /* - POINTER_OFFSET */
+		FrontierStatusOffset:     binary.LittleEndian.Uint32(data[0x1A8:0x1AC]), /* - POINTER_OFFSET */
+		FrontierStatusOffset2:    binary.LittleEndian.Uint32(data[0x1AC:0x1B0]), /* - POINTER_OFFSET */
+		ExternalEventFlagsOffset: binary.LittleEndian.Uint32(data[0x1B0:0x1B4]), /* - POINTER_OFFSET */
+		ExternalEventDataOffset:  binary.LittleEndian.Uint32(data[0x1B4:0x1B8]), /* - POINTER_OFFSET */
 		// unk18: data[0x1B8:0x1BC],
 		SpeciesInfoPtr: binary.LittleEndian.Uint32(data[0x1BC:0x1C0]) - POINTER_OFFSET,
+		// some padding that idk and does not matter
 		// AbilityNamesPtr:        binary.LittleEndian.Uint32(data[0x1BC:0x1C0]) - POINTER_OFFSET,
 		// AbilityDescriptionsPtr: binary.LittleEndian.Uint64(data[0x1C0:0x1C9]) - POINTER_OFFSET,
-		ItemsPtr:           binary.LittleEndian.Uint32(data[0x1C9:0x1CD]) - POINTER_OFFSET,
-		MovesPtr:           binary.LittleEndian.Uint32(data[0x1CD:0x1D1]) - POINTER_OFFSET,
-		BallGfxPtr:         binary.LittleEndian.Uint32(data[0x1D1:0x1D5]) - POINTER_OFFSET,
-		BallPallettesPtr:   binary.LittleEndian.Uint32(data[0x1D5:0x1D9]) - POINTER_OFFSET,
-		GcnLinkFlagsOffset: binary.LittleEndian.Uint32(data[0x1D9:0x1DD]) /* - POINTER_OFFSET */,
+		ItemsPtr:           binary.LittleEndian.Uint32(data[0x1C8:0x1CC]) - POINTER_OFFSET,
+		MovesPtr:           binary.LittleEndian.Uint32(data[0x1CC:0x1D0]) - POINTER_OFFSET,
+		BallGfxPtr:         binary.LittleEndian.Uint32(data[0x1D0:0x1D4]) - POINTER_OFFSET,
+		BallPallettesPtr:   binary.LittleEndian.Uint32(data[0x1D4:0x1D8]) - POINTER_OFFSET,
+		GcnLinkFlagsOffset: binary.LittleEndian.Uint32(data[0x1D8:0x1DC]), /* - POINTER_OFFSET */
 		//
 		GameClearFlag:     binary.LittleEndian.Uint32(data[0x1DC:0x1E0]),
 		RibbonFlag:        binary.LittleEndian.Uint32(data[0x1E0:0x1E4]),
@@ -214,9 +218,11 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	}
 	a := ParseAbilitiesBytes(data, int(g.AbilitiesPtr), int(g.AbilitiesCount))
 	Abilities = a
-	fmt.Println(Abilities)
 	s := ParseSpeciesInfoBytes(data, int(g.SpeciesInfoPtr), int(g.SpeciesCount))
 	Species = s
-	fmt.Println(Species)
+	i := ParseItemsInfoBytes(data, int(g.ItemsPtr), int(g.ItemsCount))
+	Items = i
+	m := ParseMovesInfoBytes(data, int(g.MovesPtr), int(g.MovesCount))
+	Moves = m
 	return g
 }

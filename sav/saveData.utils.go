@@ -19,7 +19,12 @@ func DecodeGFString(text []byte) string {
 	for _, i := range text {
 		c := int(i) - 161
 		if c < 0 || c >= len(chars) {
-			ret += " "
+			// TODO special chars map
+			if c == -134 {
+				ret += "é"
+			} else {
+				ret += " "
+			}
 		} else {
 			ret += string(chars[c])
 		}
