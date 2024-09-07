@@ -177,31 +177,52 @@ func (p *Pokemon) Moves() []string {
 }
 func (p *Pokemon) SDExportFormat() string {
 	var sb strings.Builder
-	// Print Pokémon name and item
+
+	// Pokémon name and item
 	if p.nickname != "" {
-		if p.ItemName() != "None" {
-			sb.WriteString(fmt.Sprintf("%s (%s) @ %s\n", p.Nickname(), p.SpeciesName(), p.ItemName()))
-		} else {
-			sb.WriteString(fmt.Sprintf("%s (%s)\n", p.Nickname(), p.SpeciesName()))
-		}
+		sb.WriteString(fmt.Sprintf("%s (%s)", p.Nickname(), p.SpeciesName()))
 	} else {
-		if p.ItemName() != "None" {
-			sb.WriteString(fmt.Sprintf("%s @ %s\n", p.SpeciesName(), p.ItemName()))
-		} else {
-			sb.WriteString(fmt.Sprintf("%s\n", p.SpeciesName()))
-		}
+		sb.WriteString(p.SpeciesName())
 	}
+
+	if p.Item != 0 {
+		sb.WriteString(fmt.Sprintf(" @ %s", p.ItemName()))
+	}
+	sb.WriteString("\n")
+
+	// Level, Nature, and Ability
 	sb.WriteString(fmt.Sprintf("Level: %d\n", p.level))
 	sb.WriteString(fmt.Sprintf("%s Nature\n", p.NatureName()))
 	sb.WriteString(fmt.Sprintf("Ability: %s\n", p.AbilityName()))
-	sb.WriteString(fmt.Sprintf("EVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
-		p.HpEv, p.AtkEv, p.DefEv, p.SpeEv, p.SpaEv, p.SpdEv))
+
+	// EVs
+	var evs []string
+	evMap := map[string]uint8{
+		"HP":  p.HpEv,
+		"Atk": p.AtkEv,
+		"Def": p.DefEv,
+		"SpA": p.SpaEv,
+		"SpD": p.SpdEv,
+		"Spe": p.SpeEv,
+	}
+
+	for label, ev := range evMap {
+		if ev > 0 {
+			evs = append(evs, fmt.Sprintf("%d %s", ev, label))
+		}
+	}
+
+	if len(evs) > 0 {
+		sb.WriteString(fmt.Sprintf("EVs: %s\n", strings.Join(evs, " / ")))
+	}
+
+	// IVs
 	sb.WriteString(fmt.Sprintf("IVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
 		p.HpIv, p.AtkIv, p.DefIv, p.SpeIv, p.SpaIv, p.SpdIv))
-	// Print Moves
-	sb.WriteString("- ")
-	moves := p.Moves()
-	sb.WriteString(strings.Join(moves, "\n- "))
+
+	// Moves
+	sb.WriteString(fmt.Sprintf("- %s\n", strings.Join(p.Moves(), "\n- ")))
+
 	return sb.String()
 }
 

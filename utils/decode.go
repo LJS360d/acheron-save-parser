@@ -14,14 +14,17 @@ func DecodePointerString(data []byte, offset uint32) string {
 }
 
 func DecodeGFString(text []byte) string {
-	chars := "0123456789!?.-         ,  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	chars := "0123456789!?.-     '   ,  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	// TODO finish special chars map
+	specialChars := map[int]string{
+		-134: "é",
+	}
 	ret := ""
 	for _, i := range text {
 		c := int(i) - 161
 		if c < 0 || c >= len(chars) {
-			// TODO special chars map
-			if c == -134 {
-				ret += "é"
+			if specialChars[c] != "" {
+				ret += specialChars[c]
 			} else {
 				ret += " "
 			}
