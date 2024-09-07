@@ -1,17 +1,17 @@
-package sav
+package utils
 
 import (
-	"encoding/binary"
 	"strings"
 )
 
-const (
-	SECTOR_DATA_SIZE = 3968
-	SAVE3_CHUNK_SIZE = 116
-	FOOTER_SIZE      = 12
-	SECTOR_SIZE      = SECTOR_DATA_SIZE + SAVE3_CHUNK_SIZE + FOOTER_SIZE // 4096
-	SAVE_SLOT_SIZE   = SECTOR_SIZE * 14                                  // 57344
-)
+func DecodePointerString(data []byte, offset uint32) string {
+	start := int(offset)
+	end := start
+	for end < len(data) && data[end] != 0xFF /* 0xFF is the \0 of GF text encoding */ {
+		end++
+	}
+	return DecodeGFString(data[start:end])
+}
 
 func DecodeGFString(text []byte) string {
 	chars := "0123456789!?.-         ,  ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -53,19 +53,4 @@ func DecodeGFStringParallel(text []byte, numGoroutines int) string {
 	}
 
 	return strings.TrimSpace(finalResult)
-}
-
-func getSaveIndex(data []byte) int {
-	// read the last 4 bytes of the save file
-	saveIndexRaw := data[4084:]
-	// parse it as a number
-	id := binary.LittleEndian.Uint16(saveIndexRaw[0:2])
-	return int(id)
-}
-
-func getActiveSaveSlot(slot1 []byte, slot2 []byte) []byte {
-	if getSaveIndex(slot1) < getSaveIndex(slot2) {
-		return slot1
-	}
-	return slot2
 }

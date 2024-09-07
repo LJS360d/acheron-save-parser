@@ -1,7 +1,7 @@
 package sav
 
 import (
-	"acheron-save-parser/data"
+	"acheron-save-parser/gba"
 	"encoding/binary"
 )
 
@@ -76,7 +76,7 @@ func (i *ItemSlot) newEncrypted(section []byte, lowerKey uint16) {
 }
 
 func (i *ItemSlot) Name() string {
-	return data.ItemName[i.itemId]
+	return gba.Items[i.itemId].Name
 }
 
 type Pokeblock struct {

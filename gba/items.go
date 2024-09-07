@@ -1,7 +1,7 @@
 package gba
 
 import (
-	"acheron-save-parser/sav"
+	"acheron-save-parser/utils"
 	"encoding/binary"
 )
 
@@ -35,7 +35,7 @@ func ParseItemsInfoBytes(data []byte, offset int, count int) []*ItemData {
 		n := &ItemData{}
 		n.new(data[offset+i*ITEM_INFO_SIZE : offset+i*ITEM_INFO_SIZE+ITEM_INFO_SIZE])
 		items[i] = n
-		n.Description = ParsePointerString(data, n.DescriptionPtr)
+		n.Description = utils.DecodePointerString(data, n.DescriptionPtr)
 	}
 	return items
 }
@@ -47,8 +47,8 @@ func (i *ItemData) new(section []byte /* 80 bytes */) {
 	i.FieldUseFuncPtr = binary.LittleEndian.Uint32(section[8:12]) - POINTER_OFFSET
 	i.DescriptionPtr = binary.LittleEndian.Uint32(section[12:16]) - POINTER_OFFSET
 	i.EffectPtr = binary.LittleEndian.Uint32(section[16:20]) - POINTER_OFFSET
-	i.Name = sav.DecodeGFString(section[20:40])
-	i.PluralName = sav.DecodeGFString(section[40:62])
+	i.Name = utils.DecodeGFString(section[20:40])
+	i.PluralName = utils.DecodeGFString(section[40:62])
 	i.HoldEffect = section[62]
 	i.HoldEffectParam = section[63]
 	i.Importance = section[64]

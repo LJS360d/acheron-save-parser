@@ -1,13 +1,14 @@
 package sav
 
 import (
+	"acheron-save-parser/utils"
 	"encoding/binary"
 )
 
 type PC struct {
 	CurrentBox uint32
 	Pokemon    [420]Pokemon
-	BoxNames   string
+	BoxNames   [14]string
 }
 
 func (pc *PC) new(section []byte) {
@@ -16,5 +17,9 @@ func (pc *PC) new(section []byte) {
 		ix := 0x0004 + i*80
 		pc.Pokemon[i].newBoxed(section[ix : ix+80])
 	}
-	pc.BoxNames = DecodeGFString(section[0x8344:0x83C2])
+	for i := 0; i < len(pc.BoxNames); i++ {
+		nameLength := 9
+		ix := 0x8344 + i*nameLength
+		pc.BoxNames[i] = utils.DecodeGFString(section[ix : ix+nameLength])
+	}
 }

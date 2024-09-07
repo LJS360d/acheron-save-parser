@@ -11,11 +11,11 @@ else
 endif
 
 BUILD_DIR 		= bin
-BINARY_NAME 	= acheron-save-parser
+BINARY_NAME 	= save-parser
 BUILDPATH 		= $(BUILD_DIR)/$(BINARY_NAME)$(EXE)
 MAIN_PACKAGE 	= ./cmd
 
-WASM_BINARY_NAME 	= main.wasm
+WASM_BINARY_NAME 	= save-parser.wasm
 WASM_BUILDPATH 		= ../docs/public/$(WASM_BINARY_NAME)
 WASM_MAIN_PACKAGE 	= ./export
 

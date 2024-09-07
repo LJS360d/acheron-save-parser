@@ -5,7 +5,15 @@ import (
 	"encoding/binary"
 )
 
-type SaveData struct {
+const (
+	SECTOR_DATA_SIZE = 3968
+	SAVE3_CHUNK_SIZE = 116
+	FOOTER_SIZE      = 12
+	SECTOR_SIZE      = SECTOR_DATA_SIZE + SAVE3_CHUNK_SIZE + FOOTER_SIZE // 4096
+	SAVE_SLOT_SIZE   = SECTOR_SIZE * 14                                  // 57344
+)
+
+type SavData struct {
 	Trainer
 	Pokedex
 	Team
@@ -13,7 +21,7 @@ type SaveData struct {
 	PC
 }
 
-func DecodeSaveData(data []byte /* 57344 Bytes */) *SaveData {
+func ParseSavBytes(data []byte /* 57'344 Bytes */) *SavData {
 	slot1 := data[0:SAVE_SLOT_SIZE] // 14 sectors
 	// Save slot 2
 	slot2 := data[SAVE_SLOT_SIZE : SAVE_SLOT_SIZE*2] // 14 sectors
@@ -24,12 +32,12 @@ func DecodeSaveData(data []byte /* 57344 Bytes */) *SaveData {
 	// Recorded battle
 	// rb := data[SAVE_SLOT_SIZE*2+SECTOR_SIZE*3 : SAVE_SLOT_SIZE*2+SECTOR_SIZE*4] // 1 sector
 	activeSlot := getActiveSaveSlot(slot1, slot2)
-	save := &SaveData{}
-	save.processSaveSlot(activeSlot)
+	save := &SavData{}
+	save.ParseSaveSlot(activeSlot)
 	return save
 }
 
-func (s *SaveData) processSaveSlot(saveSlot []byte) {
+func (s *SavData) ParseSaveSlot(saveSlot []byte) {
 	sections := make([][]byte, 14)
 
 	for i := 0; i < 14; i++ {
@@ -64,4 +72,19 @@ func (s *SaveData) processSaveSlot(saveSlot []byte) {
 	pc := PC{}
 	pc.new(bytes.Join(sections[5:14], nil))
 	s.PC = pc
+}
+
+func getSaveIndex(data []byte) int {
+	// read the last 4 bytes of the save file
+	saveIndexRaw := data[4084:]
+	// parse it as a number
+	id := binary.LittleEndian.Uint16(saveIndexRaw[0:2])
+	return int(id)
+}
+
+func getActiveSaveSlot(slot1 []byte, slot2 []byte) []byte {
+	if getSaveIndex(slot1) < getSaveIndex(slot2) {
+		return slot1
+	}
+	return slot2
 }

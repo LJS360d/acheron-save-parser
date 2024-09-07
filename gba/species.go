@@ -1,7 +1,7 @@
 package gba
 
 import (
-	"acheron-save-parser/sav"
+	"acheron-save-parser/utils"
 	"encoding/binary"
 )
 
@@ -116,7 +116,7 @@ func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
 		s.new(data[offset+i*SPECIES_INFO_SIZE : offset+i*SPECIES_INFO_SIZE+SPECIES_INFO_SIZE])
 		species[i] = s
 		if s.DescriptionPtr != BAD_POINTER {
-			s.Description = ParsePointerString(data, s.DescriptionPtr)
+			s.Description = utils.DecodePointerString(data, s.DescriptionPtr)
 		}
 	}
 	return species
@@ -155,8 +155,8 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.Abilities[1] = binary.LittleEndian.Uint16(section[0x1A:0x1C])
 	s.Abilities[2] = binary.LittleEndian.Uint16(section[0x1C:0x1E])
 	s.SafariZoneFleeRate = section[0x1E]
-	s.CategoryName = sav.DecodeGFString(section[0x1F:0x2C])
-	s.SpeciesName = sav.DecodeGFString(section[0x2C:0x3A])
+	s.CategoryName = utils.DecodeGFString(section[0x1F:0x2C])
+	s.SpeciesName = utils.DecodeGFString(section[0x2C:0x3A])
 	s.CryID = binary.LittleEndian.Uint16(section[0x3A:0x3C])
 	s.NatDexNum = binary.LittleEndian.Uint16(section[0x3C:0x3E])
 	s.Height = binary.LittleEndian.Uint16(section[0x3E:0x40])

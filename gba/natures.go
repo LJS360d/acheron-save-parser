@@ -1,6 +1,7 @@
 package gba
 
 import (
+	"acheron-save-parser/utils"
 	"encoding/binary"
 )
 
@@ -28,8 +29,8 @@ func ParseNaturesInfoBytes(data []byte, offset int, count int) []*NatureData {
 		n := &NatureData{}
 		n.new(data[offset+i*NATURE_INFO_SIZE : offset+i*NATURE_INFO_SIZE+NATURE_INFO_SIZE])
 		natures[i] = n
-		n.Name = ParsePointerString(data, n.NamePtr)
-		n.NatureGirlMessage = ParsePointerString(data, n.NatureGirlMessagePtr)
+		n.Name = utils.DecodePointerString(data, n.NamePtr)
+		n.NatureGirlMessage = utils.DecodePointerString(data, n.NatureGirlMessagePtr)
 	}
 	return natures
 }

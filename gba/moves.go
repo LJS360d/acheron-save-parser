@@ -1,6 +1,7 @@
 package gba
 
 import (
+	"acheron-save-parser/utils"
 	"encoding/binary"
 )
 
@@ -94,8 +95,8 @@ func ParseMovesInfoBytes(data []byte, offset int, count int) []*MoveData {
 		m := &MoveData{}
 		m.new(data[offset+i*MOVE_INFO_SIZE : offset+i*MOVE_INFO_SIZE+MOVE_INFO_SIZE])
 		moves[i] = m
-		m.Name = ParsePointerString(data, m.NamePtr)
-		m.Description = ParsePointerString(data, m.DescriptionPtr)
+		m.Name = utils.DecodePointerString(data, m.NamePtr)
+		m.Description = utils.DecodePointerString(data, m.DescriptionPtr)
 	}
 	return moves
 }

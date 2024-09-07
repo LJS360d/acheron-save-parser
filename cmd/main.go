@@ -43,7 +43,7 @@ func main() {
 	section := gbaBytes[0x08690498-gba.POINTER_OFFSET : 0x08690498-gba.POINTER_OFFSET+28000]
 	for start := 0; start < len(section); start += chunkSize {
 		end := min(start+chunkSize, len(section)) // Calculate chunk boundaries
-		binStr := sav.DecodeGFStringParallel(section[start:end], 32)
+		binStr := utils.DecodeGFStringParallel(section[start:end], 32)
 		for i := 0; i < len(binStr); i += n {
 			chunk := binStr[i:min(i+n, len(binStr))]
 			writer.WriteString(chunk + "\n")

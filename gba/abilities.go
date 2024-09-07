@@ -1,7 +1,7 @@
 package gba
 
 import (
-	"acheron-save-parser/sav"
+	"acheron-save-parser/utils"
 	"encoding/binary"
 )
 
@@ -30,28 +30,29 @@ var (
 
 func ParseAbilitiesBytes(data []byte, offset int, count int) []*AbilityData {
 	abilities := make([]*AbilityData, count)
-	a := &AbilityData{}
 	var abilityInfoSize int
 	if AbilityNameLength12 {
 		abilityInfoSize = ABILITY_INFO_SIZE_LENGTH12
 		for i := 0; i < count; i++ {
+			a := &AbilityData{}
 			a.new_name12(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
 			abilities[i] = a
-			a.Description = ParsePointerString(data, a.DescriptionPtr)
+			a.Description = utils.DecodePointerString(data, a.DescriptionPtr)
 		}
 	} else {
 		abilityInfoSize = ABILITY_INFO_SIZE_LENGTH16
 		for i := 0; i < count; i++ {
+			a := &AbilityData{}
 			a.new_name16(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
 			abilities[i] = a
-			a.Description = ParsePointerString(data, a.DescriptionPtr)
+			a.Description = utils.DecodePointerString(data, a.DescriptionPtr)
 		}
 	}
 	return abilities
 }
 
 func (a *AbilityData) new_name12(section []byte /* 22 + 3 bytes */) {
-	a.Name = sav.DecodeGFString(section[0:16])
+	a.Name = utils.DecodeGFString(section[0:16])
 	a.DescriptionPtr = binary.LittleEndian.Uint32(section[16:20]) - POINTER_OFFSET
 	a.aiRating = int8(section[20])
 	a.cantBeCopied = section[21]&0x1 == 1
@@ -65,7 +66,7 @@ func (a *AbilityData) new_name12(section []byte /* 22 + 3 bytes */) {
 }
 
 func (a *AbilityData) new_name16(section []byte /* 26 + 2 bytes */) {
-	a.Name = sav.DecodeGFString(section[0:20])
+	a.Name = utils.DecodeGFString(section[0:20])
 	a.DescriptionPtr = binary.LittleEndian.Uint32(section[20:24]) - POINTER_OFFSET
 	a.aiRating = int8(section[24])
 	a.cantBeCopied = section[25]&0x1 == 0x1

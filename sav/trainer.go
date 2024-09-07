@@ -1,6 +1,7 @@
 package sav
 
 import (
+	"acheron-save-parser/utils"
 	"encoding/binary"
 )
 
@@ -47,5 +48,5 @@ func (t *Trainer) Gender() string {
 func (t *Trainer) Name() string {
 	nameBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(nameBytes, t.name)
-	return DecodeGFString(nameBytes)
+	return utils.DecodeGFString(nameBytes)
 }
