@@ -6,9 +6,9 @@ import (
 )
 
 type MoveData struct {
-	NamePtr        uint32
+	namePtr        uint32
 	Name           string
-	DescriptionPtr uint32
+	descriptionPtr uint32
 	Description    string
 	Effect         uint16
 	// -- same 2 bytes
@@ -76,13 +76,13 @@ type MoveData struct {
 
 	Argument uint32
 	// primary/secondary effects
-	AdditionalEffectsPtr uint32
+	additionalEffectsPtr uint32
 	// contest parameters
 	ContestEffect         uint8
 	ContestCategory       uint8 // 3 bits
 	ContestComboStarterId uint8
 	ContestComboMoves     [5]uint8
-	BattleAnimScriptPtr   uint32
+	battleAnimScriptPtr   uint32
 }
 
 const (
@@ -95,15 +95,15 @@ func ParseMovesInfoBytes(data []byte, offset int, count int) []*MoveData {
 		m := &MoveData{}
 		m.new(data[offset+i*MOVE_INFO_SIZE : offset+i*MOVE_INFO_SIZE+MOVE_INFO_SIZE])
 		moves[i] = m
-		m.Name = utils.DecodePointerString(data, m.NamePtr)
-		m.Description = utils.DecodePointerString(data, m.DescriptionPtr)
+		m.Name = utils.DecodePointerString(data, m.namePtr)
+		m.Description = utils.DecodePointerString(data, m.descriptionPtr)
 	}
 	return moves
 }
 
 func (m *MoveData) new(section []byte /* 52 bytes */) {
-	m.NamePtr = binary.LittleEndian.Uint32(section[0:4]) - POINTER_OFFSET
-	m.DescriptionPtr = binary.LittleEndian.Uint32(section[4:8]) - POINTER_OFFSET
+	m.namePtr = binary.LittleEndian.Uint32(section[0:4]) - POINTER_OFFSET
+	m.descriptionPtr = binary.LittleEndian.Uint32(section[4:8]) - POINTER_OFFSET
 	m.Effect = binary.LittleEndian.Uint16(section[8:10])
 	// first 5 bits
 	m.Type = section[10] & 0x1F
@@ -213,7 +213,7 @@ func (m *MoveData) new(section []byte /* 52 bytes */) {
 	// last 4 bits are unused
 	// 4 bytes of padding
 	m.Argument = binary.LittleEndian.Uint32(section[32:36])
-	m.AdditionalEffectsPtr = binary.LittleEndian.Uint32(section[36:40]) - POINTER_OFFSET
+	m.additionalEffectsPtr = binary.LittleEndian.Uint32(section[36:40]) - POINTER_OFFSET
 	m.ContestEffect = section[40]
 	// first 3 bits
 	m.ContestCategory = section[41] & 0x07
@@ -221,5 +221,5 @@ func (m *MoveData) new(section []byte /* 52 bytes */) {
 	m.ContestComboStarterId = section[41]&0b1111000<<3 | section[42]&0b111
 	// rest of [42] is padding
 	copy(m.ContestComboMoves[:], section[43:48])
-	m.BattleAnimScriptPtr = binary.LittleEndian.Uint32(section[48:52]) - POINTER_OFFSET
+	m.battleAnimScriptPtr = binary.LittleEndian.Uint32(section[48:52]) - POINTER_OFFSET
 }

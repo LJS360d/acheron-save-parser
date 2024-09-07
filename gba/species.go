@@ -12,6 +12,8 @@ type SpeciesData struct {
 	BaseSpeed        uint8
 	BaseSpAttack     uint8
 	BaseSpDefense    uint8
+	Bst              int
+	Generation       int
 	Types            [2]uint8
 	CatchRate        uint8
 	ForceTeraType    uint8
@@ -43,25 +45,25 @@ type SpeciesData struct {
 	TrainerScale       uint16
 	TrainerOffset      uint16
 	// 2 bytes of pointer boundary padding
-	DescriptionPtr        uint32
+	descriptionPtr        uint32
 	Description           string
 	BodyColor             uint8
 	NoFlip                bool
 	FrontAnimDelay        uint8
 	FrontAnimID           uint8
 	BackAnimID            uint8
-	FrontAnimFramesPtr    uint32
-	FrontPicPtr           uint32
-	FrontPicFemalePtr     uint32
-	BackPicPtr            uint32
-	BackPicFemalePtr      uint32
-	PalettePtr            uint32
-	PaletteFemalePtr      uint32
-	ShinyPalettePtr       uint32
-	ShinyPaletteFemalePtr uint32
-	IconSpritePtr         uint32
-	IconSpriteFemalePtr   uint32
-	FootprintPtr          uint32
+	frontAnimFramesPtr    uint32
+	frontPicPtr           uint32
+	frontPicFemalePtr     uint32
+	backPicPtr            uint32
+	backPicFemalePtr      uint32
+	palettePtr            uint32
+	paletteFemalePtr      uint32
+	shinyPalettePtr       uint32
+	shinyPaletteFemalePtr uint32
+	iconSpritePtr         uint32
+	iconSpriteFemalePtr   uint32
+	footprintPtr          uint32
 	FrontPicSize          uint8
 	FrontPicSizeFemale    uint8
 	FrontPicYOffset       uint8
@@ -92,15 +94,15 @@ type SpeciesData struct {
 	TMIlliterate      bool
 	IsFrontierBanned  bool
 	// Padding4                 14 bits of padding
-	LevelUpLearnsetPtr       uint32
-	TeachableLearnsetPtr     uint32
-	EggMoveLearnsetPtr       uint32
-	EvolutionsPtr            uint32
-	FormSpeciesIDTablePtr    uint32
-	FormChangeTablePtr       uint32
+	levelUpLearnsetPtr       uint32
+	teachableLearnsetPtr     uint32
+	eggMoveLearnsetPtr       uint32
+	evolutionsPtr            uint32
+	formSpeciesIDTablePtr    uint32
+	formChangeTablePtr       uint32
 	OverworldData            [32]uint8 // TODO
-	OverworldPalettePtr      uint32
-	OverworldShinyPalettePtr uint32
+	overworldPalettePtr      uint32
+	overworldShinyPalettePtr uint32
 }
 
 const (
@@ -115,11 +117,35 @@ func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
 		s := &SpeciesData{}
 		s.new(data[offset+i*SPECIES_INFO_SIZE : offset+i*SPECIES_INFO_SIZE+SPECIES_INFO_SIZE])
 		species[i] = s
-		if s.DescriptionPtr != BAD_POINTER {
-			s.Description = utils.DecodePointerString(data, s.DescriptionPtr)
+		if s.descriptionPtr != BAD_POINTER {
+			s.Description = utils.DecodePointerString(data, s.descriptionPtr)
 		}
+		s.Bst = int(s.BaseHP + s.BaseAttack + s.BaseDefense + s.BaseSpeed + s.BaseSpAttack + s.BaseSpDefense)
+		s.Generation = getGenerationByDexNumber(int(s.NatDexNum))
 	}
 	return species
+}
+
+func getGenerationByDexNumber(dexNumber int) int {
+	// start: 1, end: 151, generation: 1
+	var gens []struct{ start, end, generation int } = []struct{ start, end, generation int }{
+		{start: 1, end: 151, generation: 1},
+		{start: 152, end: 251, generation: 2},
+		{start: 252, end: 386, generation: 3},
+		{start: 387, end: 493, generation: 4},
+		{start: 494, end: 649, generation: 5},
+		{start: 650, end: 721, generation: 6},
+		{start: 722, end: 809, generation: 7},
+		{start: 810, end: 905, generation: 8},
+		{start: 906, end: 1025, generation: 9},
+	}
+
+	for _, gen := range gens {
+		if gen.start <= dexNumber && dexNumber <= gen.end {
+			return gen.generation
+		}
+	}
+	return 0
 }
 
 func (s *SpeciesData) new(section []byte /* 216 bytes */) {
@@ -166,7 +192,7 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.TrainerScale = binary.LittleEndian.Uint16(section[0x46:0x48])
 	s.TrainerOffset = binary.LittleEndian.Uint16(section[0x48:0x4A])
 	// 2 bytes of padding pointer boundary padding
-	s.DescriptionPtr = binary.LittleEndian.Uint32(section[0x4C:0x50]) - POINTER_OFFSET
+	s.descriptionPtr = binary.LittleEndian.Uint32(section[0x4C:0x50]) - POINTER_OFFSET
 	// first 7 bits
 	s.BodyColor = section[0x50] & 0x7F
 	// last bit
@@ -174,18 +200,18 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.FrontAnimDelay = section[0x51]
 	s.FrontAnimID = section[0x52]
 	s.BackAnimID = section[0x53]
-	s.FrontAnimFramesPtr = binary.LittleEndian.Uint32(section[0x54:0x58]) - POINTER_OFFSET
-	s.FrontPicPtr = binary.LittleEndian.Uint32(section[0x58:0x5C]) - POINTER_OFFSET
-	s.FrontPicFemalePtr = binary.LittleEndian.Uint32(section[0x5C:0x60]) - POINTER_OFFSET
-	s.BackPicPtr = binary.LittleEndian.Uint32(section[0x60:0x64]) - POINTER_OFFSET
-	s.BackPicFemalePtr = binary.LittleEndian.Uint32(section[0x64:0x68]) - POINTER_OFFSET
-	s.PalettePtr = binary.LittleEndian.Uint32(section[0x68:0x6C]) - POINTER_OFFSET
-	s.PaletteFemalePtr = binary.LittleEndian.Uint32(section[0x6C:0x70]) - POINTER_OFFSET
-	s.ShinyPalettePtr = binary.LittleEndian.Uint32(section[0x70:0x74]) - POINTER_OFFSET
-	s.ShinyPaletteFemalePtr = binary.LittleEndian.Uint32(section[0x74:0x78]) - POINTER_OFFSET
-	s.IconSpritePtr = binary.LittleEndian.Uint32(section[0x78:0x7C]) - POINTER_OFFSET
-	s.IconSpriteFemalePtr = binary.LittleEndian.Uint32(section[0x7C:0x80]) - POINTER_OFFSET
-	s.FootprintPtr = binary.LittleEndian.Uint32(section[0x80:0x84]) - POINTER_OFFSET
+	s.frontAnimFramesPtr = binary.LittleEndian.Uint32(section[0x54:0x58]) - POINTER_OFFSET
+	s.frontPicPtr = binary.LittleEndian.Uint32(section[0x58:0x5C]) - POINTER_OFFSET
+	s.frontPicFemalePtr = binary.LittleEndian.Uint32(section[0x5C:0x60]) - POINTER_OFFSET
+	s.backPicPtr = binary.LittleEndian.Uint32(section[0x60:0x64]) - POINTER_OFFSET
+	s.backPicFemalePtr = binary.LittleEndian.Uint32(section[0x64:0x68]) - POINTER_OFFSET
+	s.palettePtr = binary.LittleEndian.Uint32(section[0x68:0x6C]) - POINTER_OFFSET
+	s.paletteFemalePtr = binary.LittleEndian.Uint32(section[0x6C:0x70]) - POINTER_OFFSET
+	s.shinyPalettePtr = binary.LittleEndian.Uint32(section[0x70:0x74]) - POINTER_OFFSET
+	s.shinyPaletteFemalePtr = binary.LittleEndian.Uint32(section[0x74:0x78]) - POINTER_OFFSET
+	s.iconSpritePtr = binary.LittleEndian.Uint32(section[0x78:0x7C]) - POINTER_OFFSET
+	s.iconSpriteFemalePtr = binary.LittleEndian.Uint32(section[0x7C:0x80]) - POINTER_OFFSET
+	s.footprintPtr = binary.LittleEndian.Uint32(section[0x80:0x84]) - POINTER_OFFSET
 	s.FrontPicSize = section[0x84]
 	s.FrontPicSizeFemale = section[0x85]
 	s.FrontPicYOffset = section[0x86]
@@ -219,14 +245,14 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.IsFrontierBanned = section[0x8E]&0x4 == 4
 	// Padding4 14 bits of padding, it also takes the first bit of the next byte
 	// 4 bytes of pointer boundary padding
-	s.LevelUpLearnsetPtr = binary.LittleEndian.Uint32(section[0x94:0x98]) - POINTER_OFFSET
-	s.TeachableLearnsetPtr = binary.LittleEndian.Uint32(section[0x98:0x9C]) - POINTER_OFFSET
-	s.EggMoveLearnsetPtr = binary.LittleEndian.Uint32(section[0x9C:0xA0]) - POINTER_OFFSET
-	s.EvolutionsPtr = binary.LittleEndian.Uint32(section[0xA0:0xA4]) - POINTER_OFFSET
-	s.FormSpeciesIDTablePtr = binary.LittleEndian.Uint32(section[0xA4:0xA8]) - POINTER_OFFSET
-	s.FormChangeTablePtr = binary.LittleEndian.Uint32(section[0xA8:0xAC]) - POINTER_OFFSET
+	s.levelUpLearnsetPtr = binary.LittleEndian.Uint32(section[0x94:0x98]) - POINTER_OFFSET
+	s.teachableLearnsetPtr = binary.LittleEndian.Uint32(section[0x98:0x9C]) - POINTER_OFFSET
+	s.eggMoveLearnsetPtr = binary.LittleEndian.Uint32(section[0x9C:0xA0]) - POINTER_OFFSET
+	s.evolutionsPtr = binary.LittleEndian.Uint32(section[0xA0:0xA4]) - POINTER_OFFSET
+	s.formSpeciesIDTablePtr = binary.LittleEndian.Uint32(section[0xA4:0xA8]) - POINTER_OFFSET
+	s.formChangeTablePtr = binary.LittleEndian.Uint32(section[0xA8:0xAC]) - POINTER_OFFSET
 	// TODO
 	// s.OverworldData = section[0xAC:0xB0]
-	s.OverworldPalettePtr = binary.LittleEndian.Uint32(section[0xB0:0xB4]) - POINTER_OFFSET
-	s.OverworldShinyPalettePtr = binary.LittleEndian.Uint32(section[0xB4:0xB8]) - POINTER_OFFSET
+	s.overworldPalettePtr = binary.LittleEndian.Uint32(section[0xB0:0xB4]) - POINTER_OFFSET
+	s.overworldShinyPalettePtr = binary.LittleEndian.Uint32(section[0xB4:0xB8]) - POINTER_OFFSET
 }

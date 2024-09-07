@@ -7,7 +7,7 @@ import (
 
 type AbilityData struct {
 	Name              string // 20 bytes
-	DescriptionPtr    uint32
+	descriptionPtr    uint32
 	Description       string
 	aiRating          int8
 	cantBeCopied      bool
@@ -37,7 +37,7 @@ func ParseAbilitiesBytes(data []byte, offset int, count int) []*AbilityData {
 			a := &AbilityData{}
 			a.new_name12(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
 			abilities[i] = a
-			a.Description = utils.DecodePointerString(data, a.DescriptionPtr)
+			a.Description = utils.DecodePointerString(data, a.descriptionPtr)
 		}
 	} else {
 		abilityInfoSize = ABILITY_INFO_SIZE_LENGTH16
@@ -45,7 +45,7 @@ func ParseAbilitiesBytes(data []byte, offset int, count int) []*AbilityData {
 			a := &AbilityData{}
 			a.new_name16(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
 			abilities[i] = a
-			a.Description = utils.DecodePointerString(data, a.DescriptionPtr)
+			a.Description = utils.DecodePointerString(data, a.descriptionPtr)
 		}
 	}
 	return abilities
@@ -53,7 +53,7 @@ func ParseAbilitiesBytes(data []byte, offset int, count int) []*AbilityData {
 
 func (a *AbilityData) new_name12(section []byte /* 22 + 3 bytes */) {
 	a.Name = utils.DecodeGFString(section[0:16])
-	a.DescriptionPtr = binary.LittleEndian.Uint32(section[16:20]) - POINTER_OFFSET
+	a.descriptionPtr = binary.LittleEndian.Uint32(section[16:20]) - POINTER_OFFSET
 	a.aiRating = int8(section[20])
 	a.cantBeCopied = section[21]&0x1 == 1
 	a.cantBeSwapped = section[21]&0x2 == 1
@@ -67,7 +67,7 @@ func (a *AbilityData) new_name12(section []byte /* 22 + 3 bytes */) {
 
 func (a *AbilityData) new_name16(section []byte /* 26 + 2 bytes */) {
 	a.Name = utils.DecodeGFString(section[0:20])
-	a.DescriptionPtr = binary.LittleEndian.Uint32(section[20:24]) - POINTER_OFFSET
+	a.descriptionPtr = binary.LittleEndian.Uint32(section[20:24]) - POINTER_OFFSET
 	a.aiRating = int8(section[24])
 	a.cantBeCopied = section[25]&0x1 == 0x1
 	a.cantBeSwapped = section[25]&0x2 == 0x2

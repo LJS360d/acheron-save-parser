@@ -6,7 +6,7 @@ import (
 )
 
 type NatureData struct {
-	NamePtr                 uint32
+	namePtr                 uint32
 	Name                    string
 	StatUp                  uint8
 	StatDown                uint8
@@ -15,7 +15,7 @@ type NatureData struct {
 	BattlePalacePercents    [4]uint8
 	BattlePalaceFlavorText  uint8
 	BattlePalaceSmokescreen uint8
-	NatureGirlMessagePtr    uint32
+	natureGirlMessagePtr    uint32
 	NatureGirlMessage       string
 }
 
@@ -29,14 +29,14 @@ func ParseNaturesInfoBytes(data []byte, offset int, count int) []*NatureData {
 		n := &NatureData{}
 		n.new(data[offset+i*NATURE_INFO_SIZE : offset+i*NATURE_INFO_SIZE+NATURE_INFO_SIZE])
 		natures[i] = n
-		n.Name = utils.DecodePointerString(data, n.NamePtr)
-		n.NatureGirlMessage = utils.DecodePointerString(data, n.NatureGirlMessagePtr)
+		n.Name = utils.DecodePointerString(data, n.namePtr)
+		n.NatureGirlMessage = utils.DecodePointerString(data, n.natureGirlMessagePtr)
 	}
 	return natures
 }
 
 func (n *NatureData) new(section []byte /* 20 bytes */) {
-	n.NamePtr = binary.LittleEndian.Uint32(section[0:4]) - POINTER_OFFSET
+	n.namePtr = binary.LittleEndian.Uint32(section[0:4]) - POINTER_OFFSET
 	//
 	n.StatUp = section[4]
 	n.StatDown = section[5]
@@ -50,6 +50,6 @@ func (n *NatureData) new(section []byte /* 20 bytes */) {
 	n.BattlePalaceFlavorText = section[13]
 	n.BattlePalaceSmokescreen = section[14]
 	// 1 byte of pointer boundary padding
-	n.NatureGirlMessagePtr = binary.LittleEndian.Uint32(section[16:20]) - POINTER_OFFSET
+	n.natureGirlMessagePtr = binary.LittleEndian.Uint32(section[16:20]) - POINTER_OFFSET
 	//
 }
