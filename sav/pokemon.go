@@ -196,20 +196,25 @@ func (p *Pokemon) SDExportFormat() string {
 	sb.WriteString(fmt.Sprintf("Ability: %s\n", p.AbilityName()))
 
 	// EVs
-	var evs []string
-	evMap := map[string]uint8{
-		"HP":  p.HpEv,
-		"Atk": p.AtkEv,
-		"Def": p.DefEv,
-		"SpA": p.SpaEv,
-		"SpD": p.SpdEv,
-		"Spe": p.SpeEv,
-	}
+	evs := []string{}
 
-	for label, ev := range evMap {
-		if ev > 0 {
-			evs = append(evs, fmt.Sprintf("%d %s", ev, label))
-		}
+	if p.HpEv > 0 {
+		evs = append(evs, fmt.Sprintf("%d HP", p.HpEv))
+	}
+	if p.AtkEv > 0 {
+		evs = append(evs, fmt.Sprintf("%d Atk", p.AtkEv))
+	}
+	if p.DefEv > 0 {
+		evs = append(evs, fmt.Sprintf("%d Def", p.DefEv))
+	}
+	if p.SpaEv > 0 {
+		evs = append(evs, fmt.Sprintf("%d SpA", p.SpaEv))
+	}
+	if p.SpdEv > 0 {
+		evs = append(evs, fmt.Sprintf("%d SpD", p.SpdEv))
+	}
+	if p.SpeEv > 0 {
+		evs = append(evs, fmt.Sprintf("%d Spe", p.SpeEv))
 	}
 
 	if len(evs) > 0 {
