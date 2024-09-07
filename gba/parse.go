@@ -7,6 +7,7 @@ import (
 
 const (
 	POINTER_OFFSET = 0x08000000
+	BAD_POINTER    = 0x0f8000000
 )
 
 var (
@@ -224,5 +225,9 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	Items = i
 	m := ParseMovesInfoBytes(data, int(g.MovesPtr), int(g.MovesCount))
 	Moves = m
+	NaturesPtr := 0x08690498 - POINTER_OFFSET
+	NaturesCount := 25
+	n := ParseNaturesInfoBytes(data, int(NaturesPtr), int(NaturesCount))
+	Natures = n
 	return g
 }

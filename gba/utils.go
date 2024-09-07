@@ -1,6 +1,8 @@
 package gba
 
-import "acheron-save-parser/sav"
+import (
+	"acheron-save-parser/sav"
+)
 
 func ParsePointerString(data []byte, offset uint32) string {
 	start := int(offset)

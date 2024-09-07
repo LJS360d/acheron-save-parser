@@ -28,7 +28,7 @@ type SpeciesData struct {
 	GenderRatio        uint8
 	EggCycles          uint8
 	Friendship         uint8
-	GrowthRate         uint8
+	GrowthRate         uint8 // experience group
 	EggGroups          [2]uint8
 	Abilities          [NUM_ABILITY_SLOTS]uint16
 	SafariZoneFleeRate uint8
@@ -43,24 +43,25 @@ type SpeciesData struct {
 	TrainerScale       uint16
 	TrainerOffset      uint16
 	// 2 bytes of pointer boundary padding
-	DescriptionPtr        uint32 // Pointer to u8
+	DescriptionPtr        uint32
+	Description           string
 	BodyColor             uint8
 	NoFlip                bool
 	FrontAnimDelay        uint8
 	FrontAnimID           uint8
 	BackAnimID            uint8
-	FrontAnimFramesPtr    uint32 // Pointer to AnimCmd
-	FrontPicPtr           uint32 // Pointer to uint32
-	FrontPicFemalePtr     uint32 // Pointer to uint32
-	BackPicPtr            uint32 // Pointer to uint32
-	BackPicFemalePtr      uint32 // Pointer to uint32
-	PalettePtr            uint32 // Pointer to uint32
-	PaletteFemalePtr      uint32 // Pointer to uint32
-	ShinyPalettePtr       uint32 // Pointer to uint32
-	ShinyPaletteFemalePtr uint32 // Pointer to uint32
-	IconSpritePtr         uint32 // Pointer to uint8
-	IconSpriteFemalePtr   uint32 // Pointer to uint8
-	FootprintPtr          uint32 // Pointer to uint8 (conditional compilation assumes P_FOOTPRINTS is true)
+	FrontAnimFramesPtr    uint32
+	FrontPicPtr           uint32
+	FrontPicFemalePtr     uint32
+	BackPicPtr            uint32
+	BackPicFemalePtr      uint32
+	PalettePtr            uint32
+	PaletteFemalePtr      uint32
+	ShinyPalettePtr       uint32
+	ShinyPaletteFemalePtr uint32
+	IconSpritePtr         uint32
+	IconSpriteFemalePtr   uint32
+	FootprintPtr          uint32
 	FrontPicSize          uint8
 	FrontPicSizeFemale    uint8
 	FrontPicYOffset       uint8
@@ -91,15 +92,15 @@ type SpeciesData struct {
 	TMIlliterate      bool
 	IsFrontierBanned  bool
 	// Padding4                 14 bits of padding
-	LevelUpLearnsetPtr       uint32    // Pointer to LevelUpMove
-	TeachableLearnsetPtr     uint32    // Pointer to uint16
-	EggMoveLearnsetPtr       uint32    // Pointer to uint16
-	EvolutionsPtr            uint32    // Pointer to Evolution
-	FormSpeciesIDTablePtr    uint32    // Pointer to uint16
-	FormChangeTablePtr       uint32    // Pointer to FormChange
-	OverworldData            [32]uint8 // wtf is this?
-	OverworldPalettePtr      uint32    // Pointer to interface{}
-	OverworldShinyPalettePtr uint32    // Pointer to interface{}
+	LevelUpLearnsetPtr       uint32
+	TeachableLearnsetPtr     uint32
+	EggMoveLearnsetPtr       uint32
+	EvolutionsPtr            uint32
+	FormSpeciesIDTablePtr    uint32
+	FormChangeTablePtr       uint32
+	OverworldData            [32]uint8 // TODO
+	OverworldPalettePtr      uint32
+	OverworldShinyPalettePtr uint32
 }
 
 const (
@@ -114,6 +115,9 @@ func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
 		s := &SpeciesData{}
 		s.new(data[offset+i*SPECIES_INFO_SIZE : offset+i*SPECIES_INFO_SIZE+SPECIES_INFO_SIZE])
 		species[i] = s
+		if s.DescriptionPtr != BAD_POINTER {
+			s.Description = ParsePointerString(data, s.DescriptionPtr)
+		}
 	}
 	return species
 }
