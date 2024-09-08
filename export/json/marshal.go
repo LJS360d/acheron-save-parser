@@ -53,7 +53,7 @@ func marshalToCamelCase(v reflect.Value) JSON {
 				if fieldValue.Kind() == reflect.Struct {
 					result[lowercaseFieldName] = marshalToCamelCase(fieldValue)
 				} else if fieldValue.Kind() == reflect.Slice || fieldValue.Kind() == reflect.Array {
-					result[lowercaseFieldName] = MarshalSlice(fieldValue)
+					result[lowercaseFieldName] = processSlice(fieldValue)
 				} else if fieldValue.Kind() == reflect.Map {
 					result[lowercaseFieldName] = processMap(fieldValue)
 				} else {
@@ -66,14 +66,20 @@ func marshalToCamelCase(v reflect.Value) JSON {
 }
 
 // Helper function to process slices
-func MarshalSlice(v reflect.Value) any {
+func MarshalSlice[T any](slice []T) any {
+	v := reflect.ValueOf(slice)
+	return processSlice(v)
+}
+
+// Helper function to process slices
+func processSlice(v reflect.Value) any {
 	var result []any
 	for i := 0; i < v.Len(); i++ {
 		elem := v.Index(i)
 		if elem.Kind() == reflect.Struct {
 			result = append(result, marshalToCamelCase(elem))
 		} else if elem.Kind() == reflect.Slice || elem.Kind() == reflect.Array {
-			result = append(result, MarshalSlice(elem))
+			result = append(result, processSlice(elem))
 		} else if elem.Kind() == reflect.Map {
 			result = append(result, processMap(elem))
 		} else {
@@ -91,7 +97,7 @@ func processMap(v reflect.Value) JSON {
 		if val.Kind() == reflect.Struct {
 			result[key.String()] = marshalToCamelCase(val)
 		} else if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
-			result[key.String()] = MarshalSlice(val)
+			result[key.String()] = processSlice(val)
 		} else if val.Kind() == reflect.Map {
 			result[key.String()] = processMap(val)
 		} else {

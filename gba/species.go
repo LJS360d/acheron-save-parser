@@ -98,8 +98,10 @@ type SpeciesData struct {
 	teachableLearnsetPtr     uint32
 	eggMoveLearnsetPtr       uint32
 	evolutionsPtr            uint32
-	formSpeciesIDTablePtr    uint32
+	formSpeciesIdTablePtr    uint32
+	FormSpeciesIdTable       []uint16
 	formChangeTablePtr       uint32
+	FormChangeTable          []*FormChange
 	OverworldData            [32]uint8 // TODO
 	overworldPalettePtr      uint32
 	overworldShinyPalettePtr uint32
@@ -120,10 +122,56 @@ func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
 		if s.descriptionPtr != BAD_POINTER {
 			s.Description = utils.DecodePointerString(data, s.descriptionPtr)
 		}
-		s.Bst = int(s.BaseHP + s.BaseAttack + s.BaseDefense + s.BaseSpeed + s.BaseSpAttack + s.BaseSpDefense)
+		s.Bst = int(s.BaseHP) + int(s.BaseAttack) + int(s.BaseDefense) + int(s.BaseSpeed) + int(s.BaseSpAttack) + int(s.BaseSpDefense)
 		s.Generation = getGenerationByDexNumber(int(s.NatDexNum))
+		s.FormSpeciesIdTable = parseFormSpeciesIdTable(data, s.formSpeciesIdTablePtr)
+		s.FormChangeTable = parseFormChangeTable(data, s.formChangeTablePtr)
 	}
 	return species
+}
+
+func parseFormSpeciesIdTable(data []byte, offset uint32) []uint16 {
+	table := make([]uint16, 0)
+	if offset == BAD_POINTER || offset >= uint32(len(data)) {
+		return table
+	}
+	for i := offset; i+1 < uint32(len(data)); i += 2 {
+		value := binary.LittleEndian.Uint16(data[i:])
+		if value == 0xFFFF {
+			break
+		}
+		table = append(table, value)
+	}
+	return table
+}
+
+type FormChange struct {
+	Method        uint16
+	TargetSpecies uint16
+	Param1        uint16
+	Param2        uint16
+	Param3        uint16
+}
+
+func parseFormChangeTable(data []byte, offset uint32) []*FormChange {
+	table := make([]*FormChange, 0)
+	if offset == BAD_POINTER || offset >= uint32(len(data)) {
+		return table
+	}
+	for i := offset; i+12 < uint32(len(data)); i += 12 {
+		change := &FormChange{
+			Method:        binary.LittleEndian.Uint16(data[i:]),
+			TargetSpecies: binary.LittleEndian.Uint16(data[i+2:]),
+			Param1:        binary.LittleEndian.Uint16(data[i+4:]),
+			Param2:        binary.LittleEndian.Uint16(data[i+6:]),
+			Param3:        binary.LittleEndian.Uint16(data[i+8:]),
+		}
+		if change.Method == 0x0000 {
+			break
+		}
+		table = append(table, change)
+	}
+	return table
 }
 
 func getGenerationByDexNumber(dexNumber int) int {
@@ -161,13 +209,13 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.ForceTeraType = section[0x9]
 	s.ExpYield = binary.LittleEndian.Uint16(section[0xA:0xC])
 	// first 2 bits
-	s.EvYieldHP = section[0xC] & 0x3
-	s.EvYieldAttack = section[0xC] & 0xC
-	s.EvYieldDefense = section[0xC] & 0x30
-	s.EvYieldSpeed = section[0xC] & 0xC0
+	s.EvYieldHP = section[0xC] & 0b00000011
+	s.EvYieldAttack = section[0xC] & 0b00001100 >> 2
+	s.EvYieldDefense = section[0xC] & 0b00110000 >> 4
+	s.EvYieldSpeed = section[0xC] & 0b11000000 >> 6
 	// first 2 bits
-	s.EvYieldSpAttack = section[0xD] & 0x3
-	s.EvYieldSpDefense = section[0xD] & 0xC
+	s.EvYieldSpAttack = section[0xD] & 0b00000011
+	s.EvYieldSpDefense = section[0xD] & 0b00001100 >> 2
 	// Padding2 last 4 bits
 	s.ItemCommon = binary.LittleEndian.Uint16(section[0xE:0x10])
 	s.ItemRare = binary.LittleEndian.Uint16(section[0x10:0x12])
@@ -249,7 +297,7 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.teachableLearnsetPtr = binary.LittleEndian.Uint32(section[0x98:0x9C]) - POINTER_OFFSET
 	s.eggMoveLearnsetPtr = binary.LittleEndian.Uint32(section[0x9C:0xA0]) - POINTER_OFFSET
 	s.evolutionsPtr = binary.LittleEndian.Uint32(section[0xA0:0xA4]) - POINTER_OFFSET
-	s.formSpeciesIDTablePtr = binary.LittleEndian.Uint32(section[0xA4:0xA8]) - POINTER_OFFSET
+	s.formSpeciesIdTablePtr = binary.LittleEndian.Uint32(section[0xA4:0xA8]) - POINTER_OFFSET
 	s.formChangeTablePtr = binary.LittleEndian.Uint32(section[0xA8:0xAC]) - POINTER_OFFSET
 	// TODO
 	// s.OverworldData = section[0xAC:0xB0]

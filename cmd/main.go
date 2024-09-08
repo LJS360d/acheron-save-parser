@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"reflect"
 	"strings"
 )
 
@@ -107,24 +106,28 @@ func writeSpeciesData(filename string, species []*gba.SpeciesData) {
 	json.NewEncoder(writer).Encode(utils.MapSlice(species,
 		func(mon *gba.SpeciesData, i int) JSON {
 			return JSON{
+				"id":      i,
 				"species": strings.ToUpper(utils.ToSnakeCase(mon.SpeciesName)),
-				"stats": jsonconvert.MarshalSlice(reflect.ValueOf([]uint8{
+				"stats": jsonconvert.MarshalSlice([]uint8{
 					mon.BaseHP,
 					mon.BaseAttack,
 					mon.BaseDefense,
 					mon.BaseSpeed,
 					mon.BaseSpAttack,
 					mon.BaseSpDefense,
-				})),
+				}),
 				"bst":        mon.Bst,
 				"generation": mon.Generation,
-				"types": jsonconvert.MarshalSlice(reflect.ValueOf(
-					utils.PruneDuplicates(utils.MapSlice(mon.Types[:], func(t uint8, i int) string {
-						return TYPES[t]
-					})),
-				)),
+				"types": jsonconvert.MarshalSlice(
+					utils.PruneDuplicates(
+						utils.MapSlice(mon.Types[:],
+							func(t uint8, i int) string {
+								return TYPES[t]
+							}),
+					),
+				),
 				"natDexNum": mon.NatDexNum,
-				"abilities": jsonconvert.MarshalSlice(reflect.ValueOf(
+				"abilities": jsonconvert.MarshalSlice(
 					utils.PruneDuplicates(
 						utils.FilterEmpty(
 							utils.MapSlice(mon.Abilities[:2], func(a uint16, i int) string {
@@ -133,34 +136,40 @@ func writeSpeciesData(filename string, species []*gba.SpeciesData) {
 								}
 								return strings.ToUpper(utils.ToSnakeCase(gba.Abilities[a].Name))
 							}),
-						),
-					),
-				)),
-				// "bodyColor": mon.BodyColor,
+						))),
+				"bodyColor":    mon.BodyColor,
 				"catchRate":    mon.CatchRate,
 				"categoryName": mon.CategoryName,
 				"description":  mon.Description,
 				"eggCycles":    mon.EggCycles,
-				"eggGroups": jsonconvert.MarshalSlice(reflect.ValueOf(
+				"eggGroups": jsonconvert.MarshalSlice(
 					utils.PruneDuplicates(utils.MapSlice(mon.EggGroups[:], func(g uint8, i int) string {
 						return EGG_GROUPS[g]
-					})),
-				)),
-				// TODO formChangeTable
-				"evYield": jsonconvert.MarshalSlice(reflect.ValueOf([]uint8{
+					}),
+					)),
+				"formChangeTable": jsonconvert.MarshalSlice(
+					utils.MapSlice(mon.FormChangeTable, func(change *gba.FormChange, i int) JSON {
+						return JSON{
+							"form":   change.TargetSpecies,
+							"method": change.Method,
+							"params": jsonconvert.MarshalSlice([]uint16{change.Param1, change.Param2, change.Param3}),
+						}
+					},
+					)),
+				"evYield": jsonconvert.MarshalSlice([]uint8{
 					mon.EvYieldHP,
 					mon.EvYieldAttack,
 					mon.EvYieldDefense,
 					mon.EvYieldSpeed,
 					mon.EvYieldSpAttack,
 					mon.EvYieldSpDefense,
-				})),
+				}),
 				"expYield":    mon.ExpYield,
 				"genderRatio": mon.GenderRatio,
 				"growthRate":  mon.GrowthRate,
 				"height":      mon.Height,
 				"weight":      mon.Weight,
-				"flags":       jsonconvert.MarshalSlice(reflect.ValueOf([]string{})),
+				"flags":       jsonconvert.MarshalSlice(getFlagArray(mon)),
 				"itemCommon":  mon.ItemCommon,
 				"itemRare":    mon.ItemRare,
 			}
@@ -169,4 +178,32 @@ func writeSpeciesData(filename string, species []*gba.SpeciesData) {
 	if err != nil {
 		fmt.Println("Error writing to file:", err)
 	}
+}
+func getFlagArray(mon *gba.SpeciesData) []string {
+	flags := []string{}
+
+	flagMap := map[bool]string{
+		mon.IsLegendary:       "LEGENDARY",
+		mon.IsMythical:        "MYTHICAL",
+		mon.IsUltraBeast:      "ULTRABEAST",
+		mon.IsParadox:         "PARADOX",
+		mon.IsTotem:           "TOTEM",
+		mon.IsMegaEvolution:   "MEGAEVOLUTION",
+		mon.IsPrimalReversion: "PRIMAL",
+		mon.IsUltraBurst:      "ULTRABURST",
+		mon.IsGigantamax:      "GIGANTAMAX",
+		mon.IsTeraForm:        "TERAFORM",
+		mon.IsAlolanForm:      "ALOLAN",
+		mon.IsGalarianForm:    "GALARIAN",
+		mon.IsHisuianForm:     "HISUIAN",
+		mon.IsPaldeanForm:     "PALDEAN",
+	}
+
+	for condition, flag := range flagMap {
+		if condition {
+			flags = append(flags, flag)
+		}
+	}
+
+	return flags
 }
