@@ -108,7 +108,7 @@ type SpeciesData struct {
 const (
 	NUM_ABILITY_SLOTS   = 3
 	POKEMON_NAME_LENGTH = 12
-	SPECIES_INFO_SIZE   = 216
+	SPECIES_INFO_SIZE   = 216 // (08/09/2024) on latest commit in rrh/upcoming 212 is the new size (because pointer boundaries)
 )
 
 func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
