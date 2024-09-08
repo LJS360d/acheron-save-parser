@@ -1,22 +1,20 @@
-package jsutils
+// Does not import syscall/js so it can be used in non-js environments
+package jsonconvert
 
 import (
 	"fmt"
 	"reflect"
 	"strings"
-	"syscall/js"
 )
 
-func ToJsonValue(v interface{}) js.Value {
-	json, err := ToJsonMarshal(v)
-	if err != nil {
-		return js.Global().Get("Error").New(err.Error())
-	}
-	return js.ValueOf(json)
-}
+type JSON = map[string]any
 
 // converts all exported members of a struct to a map with lowercase field names
-func ToJsonMarshal(v interface{}) (JSON, error) {
+//
+// it will not convert fields that are not exported (start with a lowercase letter)
+//
+// does not convert struct methods
+func ToJsonMarshal(v any) (JSON, error) {
 	val := reflect.ValueOf(v)
 	typ := reflect.TypeOf(v)
 
@@ -26,20 +24,19 @@ func ToJsonMarshal(v interface{}) (JSON, error) {
 			return nil, fmt.Errorf("nil pointer received")
 		}
 		val = val.Elem()
-		typ = typ.Elem()
 	}
 
 	// Check if the kind of value is a supported type
 	if val.Kind() != reflect.Struct && val.Kind() != reflect.Slice && val.Kind() != reflect.Map {
-		return nil, fmt.Errorf("input must be a struct, slice, or map, received: '%v'", val.Kind())
+		return nil, fmt.Errorf("input must be a struct, slice, or map (or pointer to one of those), received: '%v'", val.Kind())
 	}
 
-	data := marshalWithLowercaseNames(val)
+	data := marshalToCamelCase(val)
 	return data, nil
 }
 
 // Helper function to recursively marshal a struct to a map with lowercase field names
-func marshalWithLowercaseNames(v reflect.Value) JSON {
+func marshalToCamelCase(v reflect.Value) JSON {
 	result := make(JSON)
 
 	if v.Kind() == reflect.Struct {
@@ -54,7 +51,7 @@ func marshalWithLowercaseNames(v reflect.Value) JSON {
 				lowercaseFieldName := strings.ToLower(fieldName[:1]) + fieldName[1:]
 
 				if fieldValue.Kind() == reflect.Struct {
-					result[lowercaseFieldName] = marshalWithLowercaseNames(fieldValue)
+					result[lowercaseFieldName] = marshalToCamelCase(fieldValue)
 				} else if fieldValue.Kind() == reflect.Slice || fieldValue.Kind() == reflect.Array {
 					result[lowercaseFieldName] = processSlice(fieldValue)
 				} else if fieldValue.Kind() == reflect.Map {
@@ -69,12 +66,12 @@ func marshalWithLowercaseNames(v reflect.Value) JSON {
 }
 
 // Helper function to process slices
-func processSlice(v reflect.Value) interface{} {
-	var result []interface{}
+func processSlice(v reflect.Value) any {
+	var result []any
 	for i := 0; i < v.Len(); i++ {
 		elem := v.Index(i)
 		if elem.Kind() == reflect.Struct {
-			result = append(result, marshalWithLowercaseNames(elem))
+			result = append(result, marshalToCamelCase(elem))
 		} else if elem.Kind() == reflect.Slice || elem.Kind() == reflect.Array {
 			result = append(result, processSlice(elem))
 		} else if elem.Kind() == reflect.Map {
@@ -87,12 +84,12 @@ func processSlice(v reflect.Value) interface{} {
 }
 
 // Helper function to process maps
-func processMap(v reflect.Value) map[string]interface{} {
-	result := make(map[string]interface{})
+func processMap(v reflect.Value) JSON {
+	result := make(JSON)
 	for _, key := range v.MapKeys() {
 		val := v.MapIndex(key)
 		if val.Kind() == reflect.Struct {
-			result[key.String()] = marshalWithLowercaseNames(val)
+			result[key.String()] = marshalToCamelCase(val)
 		} else if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
 			result[key.String()] = processSlice(val)
 		} else if val.Kind() == reflect.Map {

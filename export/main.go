@@ -1,23 +1,23 @@
 package main
 
 import (
-	"acheron-save-parser/export/jsutils"
+	jsconvert "acheron-save-parser/export/js"
 	"acheron-save-parser/gba"
 	"acheron-save-parser/sav"
 	"fmt"
 	"syscall/js"
 )
 
-type JSON = map[string]interface{}
+type JSON = map[string]any
 
-func ParseSavBytes(this js.Value, args []js.Value) interface{} {
+func ParseSavBytes(this js.Value, args []js.Value) any {
 	fileBuffer := args[0]
 	data := make([]byte, fileBuffer.Get("length").Int())
 	js.CopyBytesToGo(data, fileBuffer)
 
 	savData := sav.ParseSavBytes(data)
-	return js.ValueOf(map[string]interface{}{
-		// "trainer": save.Trainer.ToJs(),
+	return js.ValueOf(map[string]any{
+		"trainer": jsconvert.ToJsValue(&savData.Trainer),
 		// "pokedex":  save.Pokedex.ToJs(),
 		"team": TeamToJs(&savData.Team),
 		// "bag":  save.Bag.ToJs(),
@@ -25,7 +25,7 @@ func ParseSavBytes(this js.Value, args []js.Value) interface{} {
 	})
 }
 
-func ParseGbaBytes(this js.Value, args []js.Value) interface{} {
+func ParseGbaBytes(this js.Value, args []js.Value) any {
 	fileBuffer := args[0]
 	data := make([]byte, fileBuffer.Get("length").Int())
 	js.CopyBytesToGo(data, fileBuffer)
@@ -38,7 +38,7 @@ func ParseGbaBytes(this js.Value, args []js.Value) interface{} {
 		len(gba.Abilities),
 		len(gba.Natures),
 	)
-	return js.ValueOf(jsutils.ToJsonValue(gbaData))
+	return jsconvert.ToJsValue(gbaData)
 }
 
 func main() {
@@ -47,19 +47,15 @@ func main() {
 	select {}
 }
 
-func SavToJs(s *sav.SavData) js.Value {
-	return jsutils.ToJsonValue(s)
-}
-
 func PCToJs(pc *sav.PC) js.Value {
 	jsMons := make([]js.Value, len(pc.Pokemon))
 	for i, value := range pc.Pokemon {
 		jsMons[i] = PokemonToJs(&value)
 	}
-	return js.ValueOf(map[string]interface{}{
+	return js.ValueOf(map[string]any{
 		"currentBox": pc.CurrentBox,
-		"pokemon":    jsutils.ToJsArray(jsMons),
-		"boxNames":   jsutils.ToJsArray(pc.BoxNames),
+		"pokemon":    jsconvert.ToJsArray(jsMons),
+		"boxNames":   jsconvert.ToJsArray(pc.BoxNames),
 	})
 }
 
@@ -68,7 +64,7 @@ func TeamToJs(t *sav.Team) js.Value {
 	for i, value := range t.Pokemon {
 		jsMons[i] = PokemonToJs(&value)
 	}
-	return jsutils.ToJsArray(jsMons)
+	return jsconvert.ToJsArray(jsMons)
 }
 
 func PokemonToJs(p *sav.Pokemon) js.Value {
@@ -80,25 +76,8 @@ func PokemonToJs(p *sav.Pokemon) js.Value {
 		"species":  p.SpeciesName(),
 		"item":     p.ItemName(),
 		"level":    p.Level(),
-		"toSDExportFormat": js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		"toSDExportFormat": js.FuncOf(func(this js.Value, args []js.Value) any {
 			return p.SDExportFormat()
 		}),
-	})
-}
-
-func TrainerToJs(t *sav.Trainer) js.Value {
-	return js.ValueOf(JSON{
-		"name":   t.Name(),
-		"gender": t.Gender(),
-		// "saveWarpFlags":   t.saveWarpFlags,
-		"id": t.Id,
-		// "publicId":        t.publicId,
-		// "privateId":       t.privateId,
-		"playtimeHours":   t.PlaytimeHours,
-		"playtimeMinutes": t.PlaytimeMinutes,
-		"playtimeSeconds": t.PlaytimeSeconds,
-		// "playTimeVBlanks": t.playTimeVBlanks,
-		// "options":         t.options,
-		// "securityKey":     t.securityKey,
 	})
 }

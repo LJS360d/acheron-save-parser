@@ -2,6 +2,7 @@ package main
 
 import (
 	"acheron-save-parser/gba"
+	"acheron-save-parser/sav"
 	"acheron-save-parser/utils"
 	"bufio"
 	"encoding/json"
@@ -104,6 +105,11 @@ func main() {
 		fmt.Println("Error writing to file:", err)
 	} */
 	gba.ParseGbaBytes(gbaBytes)
+	savBytes, err := os.ReadFile(*savFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sav.ParseSavBytes(savBytes)
 	file, err := os.Create("species.json")
 	if err != nil {
 		fmt.Println("Error creating file:", err)
