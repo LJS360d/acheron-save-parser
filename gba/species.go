@@ -54,6 +54,7 @@ type SpeciesData struct {
 	BackAnimID            uint8
 	frontAnimFramesPtr    uint32
 	frontPicPtr           uint32
+	FrontPic              []byte
 	frontPicFemalePtr     uint32
 	backPicPtr            uint32
 	backPicFemalePtr      uint32

@@ -95,7 +95,7 @@ func writeSpeciesData(filename string, species []*gba.SpeciesData) {
 	if !strings.HasSuffix(filename, ".json") {
 		filename += ".json"
 	}
-	file, err := os.Create(filename)
+	file, err := os.Create("build/" + filename)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return
@@ -106,8 +106,9 @@ func writeSpeciesData(filename string, species []*gba.SpeciesData) {
 	json.NewEncoder(writer).Encode(utils.MapSlice(species,
 		func(mon *gba.SpeciesData, i int) JSON {
 			return JSON{
-				"id":      i,
-				"species": strings.ToUpper(utils.ToSnakeCase(mon.SpeciesName)),
+				"id":          i,
+				"species":     getSpeciesIdentifier(mon, uint16(i+1)),
+				"speciesName": mon.SpeciesName,
 				"stats": jsonconvert.MarshalSlice([]uint8{
 					mon.BaseHP,
 					mon.BaseAttack,
@@ -179,6 +180,7 @@ func writeSpeciesData(filename string, species []*gba.SpeciesData) {
 		fmt.Println("Error writing to file:", err)
 	}
 }
+
 func getFlagArray(mon *gba.SpeciesData) []string {
 	flags := []string{}
 
@@ -206,4 +208,34 @@ func getFlagArray(mon *gba.SpeciesData) []string {
 	}
 
 	return flags
+}
+
+func getSpeciesIdentifier(mon *gba.SpeciesData, index uint16) string {
+	rename := SpeciesRenames[index]
+	if rename != "" {
+		return rename
+	}
+	speciesName := strings.ReplaceAll(
+		strings.ReplaceAll(
+			strings.ToUpper(utils.ToSnakeCase(mon.SpeciesName)),
+			" ", "_"),
+		"'", "_")
+	flagMap := map[bool]string{
+		mon.IsTotem:           "TOTEM",
+		mon.IsMegaEvolution:   "MEGA",
+		mon.IsPrimalReversion: "PRIMAL",
+		mon.IsUltraBurst:      "ULTRA",
+		mon.IsGigantamax:      "GIGANTAMAX",
+		mon.IsTeraForm:        "TERA",
+		mon.IsAlolanForm:      "ALOLAN",
+		mon.IsGalarianForm:    "GALARIAN",
+		mon.IsHisuianForm:     "HISUIAN",
+		mon.IsPaldeanForm:     "PALDEAN",
+	}
+	for condition, flag := range flagMap {
+		if condition {
+			return speciesName + "_" + flag
+		}
+	}
+	return speciesName
 }
