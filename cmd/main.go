@@ -85,7 +85,7 @@ func main() {
 	}
 	gba.ParseGbaBytes(gbaBytes)
 	sav.ParseSavBytes(savBytes)
-	writeSpeciesData("species.json", gba.Species[1:])
+	// writeSpeciesData("species.json", gba.Species[1:])
 
 }
 

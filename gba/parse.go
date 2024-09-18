@@ -1,8 +1,16 @@
 package gba
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/binary"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
+	"os"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -221,6 +229,8 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	Abilities = a
 	s := ParseSpeciesInfoBytes(data, int(g.SpeciesInfoPtr), int(g.SpeciesCount))
 	Species = s
+	pal, _ := LoadPalette("images/ivysaur.pal")
+	Save4bppImageBytes(data[s[2].frontPicPtr:s[2].frontPicPtr+2048], "images/ivysaur", pal, 64, 64)
 	i := ParseItemsInfoBytes(data, int(g.ItemsPtr), int(g.ItemsCount))
 	Items = i
 	m := ParseMovesInfoBytes(data, int(g.MovesPtr), int(g.MovesCount))
@@ -230,4 +240,155 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	n := ParseNaturesInfoBytes(data, int(NaturesPtr), int(NaturesCount))
 	Natures = n
 	return g
+}
+
+func LoadPalette(filename string) ([]color.Color, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var palette color.Palette
+	scanner := bufio.NewScanner(file)
+
+	lineNumber := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNumber++
+
+		// Skip the first three header lines (JASC-PAL, version, number of colors).
+		if lineNumber <= 3 {
+			continue
+		}
+
+		// Split the RGB components.
+		parts := strings.Split(line, " ")
+		if len(parts) != 3 {
+			continue
+		}
+
+		// Parse the R, G, B values.
+		r, _ := strconv.Atoi(parts[0])
+		g, _ := strconv.Atoi(parts[1])
+		b, _ := strconv.Atoi(parts[2])
+
+		// Append the color to the palette.
+		palette = append(palette, color.RGBA{uint8(r), uint8(g), uint8(b), 255})
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return palette, nil
+}
+
+func DecompressLZ77(input []byte) ([]byte, error) {
+	if len(input) < 4 || input[0] != 0x10 {
+		return nil, fmt.Errorf("invalid LZ77 compressed data")
+	}
+
+	var decompressed bytes.Buffer
+	srcOffset := 4
+	length := int(binary.LittleEndian.Uint32(input) >> 8)
+
+	for srcOffset < len(input) {
+		// Read the flag byte (8 blocks).
+		flag := input[srcOffset]
+		srcOffset++
+
+		for i := 0; i < 8; i++ {
+			if srcOffset >= len(input) || decompressed.Len() >= length {
+				break
+			}
+
+			// If bit is 0, it's raw byte data.
+			if (flag & 0x80) == 0 {
+				decompressed.WriteByte(input[srcOffset])
+				srcOffset++
+			} else {
+				// Else, it's a reference to earlier data (compressed).
+				if srcOffset+1 >= len(input) {
+					return nil, fmt.Errorf("unexpected end of input")
+				}
+
+				byte1 := input[srcOffset]
+				byte2 := input[srcOffset+1]
+				srcOffset += 2
+
+				disp := int(byte1&0xF)<<8 | int(byte2)
+				disp += 1
+				copyLen := int(byte1>>4) + 3
+
+				// Copy the bytes from earlier in the decompressed buffer.
+				for j := 0; j < copyLen; j++ {
+					pos := decompressed.Len() - disp
+					if pos < 0 {
+						return nil, fmt.Errorf("invalid reference position")
+					}
+					decompressed.WriteByte(decompressed.Bytes()[pos])
+				}
+			}
+			flag <<= 1
+		}
+	}
+
+	return decompressed.Bytes(), nil
+}
+
+func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, width, height int) {
+	img := image.NewPaletted(image.Rect(0, 0, width, height), palette)
+
+	decompressed, err := DecompressLZ77(bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	tilesX := width / 8  // Number of tiles horizontally
+	tilesY := height / 8 // Number of tiles vertically
+
+	// Iterate over each 8x8 tile in the image.
+	for tileY := 0; tileY < tilesY; tileY++ {
+		for tileX := 0; tileX < tilesX; tileX++ {
+			// Calculate the offset to the current tile in the decompressed byte array
+			tileOffset := (tileX + tileY*tilesX) * 32 // 32 bytes per tile (8x8 pixels, 4bpp)
+
+			// Iterate over each row in the tile (8 rows per tile)
+			for row := 0; row < 8; row++ {
+				// Each row contains 4 bytes (2 pixels per byte, 8 pixels total)
+				for col := 0; col < 8; col += 2 {
+					// Compute the index for the current byte in the decompressed data
+					byteIndex := tileOffset + (row * 4) + (col / 2)
+					byteVal := decompressed[byteIndex]
+
+					// Extract the high and low nibbles (two pixels from the byte)
+					highNibble := (byteVal >> 4) & 0xF // First pixel (left)
+					lowNibble := byteVal & 0xF         // Second pixel (right)
+
+					// Calculate the position of the pixel in the final image
+					pixelX := tileX*8 + col // X coordinate in the full image
+					pixelY := tileY*8 + row // Y coordinate in the full image
+
+					// Set the high nibble pixel (left)
+					img.SetColorIndex(pixelX, pixelY, uint8(highNibble))
+
+					// Set the low nibble pixel (right)
+					img.SetColorIndex(pixelX+1, pixelY, uint8(lowNibble))
+				}
+			}
+		}
+	}
+
+	// Save the image as a PNG file
+	file, err := os.Create(savename + ".png")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	err = png.Encode(file, img)
+	if err != nil {
+		panic(err)
+	}
 }
