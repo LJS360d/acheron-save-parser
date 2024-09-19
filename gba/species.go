@@ -59,6 +59,7 @@ type SpeciesData struct {
 	backPicPtr            uint32
 	backPicFemalePtr      uint32
 	palettePtr            uint32
+	Palette               []byte
 	paletteFemalePtr      uint32
 	shinyPalettePtr       uint32
 	shinyPaletteFemalePtr uint32

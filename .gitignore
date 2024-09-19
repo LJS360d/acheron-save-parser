@@ -27,6 +27,7 @@ go.work.sum
 # build files
 bin
 build
+assets/images
 
 # VsCode user specific
 .vscode/settings.json

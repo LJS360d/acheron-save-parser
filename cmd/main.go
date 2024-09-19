@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -86,7 +87,56 @@ func main() {
 	gba.ParseGbaBytes(gbaBytes)
 	sav.ParseSavBytes(savBytes)
 	// writeSpeciesData("species.json", gba.Species[1:])
+	/*
+		directories, err := getDirectories("../game/graphics/pokemon")
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
 
+		ReverseSpeciesRenames := make(map[string]uint16)
+		for key, value := range SpeciesRenames {
+			ReverseSpeciesRenames[value] = key
+		}
+
+		for _, mon := range directories {
+			if ReverseSpeciesRenames[strings.ToUpper(mon)] == 0 {
+				fmt.Println("Missing ID for ", mon)
+				continue
+			}
+			normalPalPath := "../game/graphics/pokemon/" + strings.ReplaceAll(mon, "_", "/") + "/normal.pal"
+			uscorePalPath := "../game/graphics/pokemon/" + mon + "/normal.pal"
+			// shinyPalPath := "../game/graphics/pokemon/" + strings.ReplaceAll(mon, "_", "/") + "/shiny.pal"
+			utils.CopyFile(normalPalPath, "assets/palettes/normal/"+fmt.Sprint(ReverseSpeciesRenames[strings.ToUpper(mon)])+".pal")
+			utils.CopyFile(uscorePalPath, "assets/palettes/normal/"+fmt.Sprint(ReverseSpeciesRenames[strings.ToUpper(mon)])+".pal")
+		} */
+}
+
+func getDirectories(root string) ([]string, error) {
+	var dirs []string
+
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// Check if it's a directory (ignore the root directory itself)
+		if info.IsDir() && path != root {
+			path = filepath.ToSlash(path)
+			// Remove the rootDir from the path
+			relativePath := strings.TrimPrefix(path+"/", root)
+
+			// Replace the OS-specific separator with "_"
+			relativePath = strings.ReplaceAll(relativePath, "/", "_")
+
+			// Ensure we don't have a leading separator (like "_subdir1")
+			relativePath = strings.TrimSuffix(strings.TrimPrefix(relativePath, "_"), "_")
+
+			dirs = append(dirs, relativePath)
+		}
+		return nil
+	})
+
+	return dirs, err
 }
 
 type JSON = map[string]interface{}
