@@ -3,13 +3,48 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Species Compare Script",
+      "label": "Generate species data (Our)",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "run",
+        "${workspaceFolder}/cmd",
+        "-sav='./test/sav/pokeemerald_2.sav'",
+        "-gba='./test/gba/pokeemerald.gba'",
+        "-o='species'"
+      ],
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate species data (Rhh)",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "run",
+        "${workspaceFolder}/cmd",
+        "-sav='./test/sav/pokeemerald_2.sav'",
+        "-gba='./test/gba/rhh.gba'",
+        "-o='species'"
+      ],
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Docs data",
       "type": "shell",
       "command": "node",
       "args": [
-        "${workspaceFolder}/scripts/species.mjs"
+        "${workspaceFolder}/scripts/species.mjs",
       ],
+      "group": {
+        "kind": "none",
+      },
       "problemMatcher": []
-    },
+    }
   ]
 }

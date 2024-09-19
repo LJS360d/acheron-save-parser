@@ -46,7 +46,7 @@ type GbaData struct {
 	// MonShinyPalettesPtr  uint32
 	// MonIconsPtr          uint32
 	// MonIconPaletteIdsPtr uint32
-	PaletteTablesPtr uint32
+	IconPalettesTablePtr uint32
 	// MonSpeciesNamesPtr uint32
 	// MoveNamesPtr       uint32
 	DecorationsPtr     uint32
@@ -146,7 +146,7 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		MonShinyPalettesPtr:  binary.LittleEndian.Uint64(data[0x13B:0x143]),
 		MonIconsPtr:          binary.LittleEndian.Uint64(data[0x143:0x14B]),
 		MonIconPaletteIdsPtr: binary.LittleEndian.Uint32(data[0x140:0x145]), */
-		PaletteTablesPtr: binary.LittleEndian.Uint32(data[0x140:0x145]),
+		IconPalettesTablePtr: binary.LittleEndian.Uint32(data[0x140:0x145]) - POINTER_OFFSET,
 		// MonSpeciesNamesPtr: binary.LittleEndian.Uint32(data[0x145:0x14A]),
 		// MoveNamesPtr:       binary.LittleEndian.Uint32(data[0x163:0x16B]),
 		DecorationsPtr:     binary.LittleEndian.Uint32(data[0x14C:0x150]) - POINTER_OFFSET,

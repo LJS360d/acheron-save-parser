@@ -61,8 +61,8 @@ type SpeciesData struct {
 	paletteFemalePtr      uint32
 	ShinyPalettePtr       uint32
 	shinyPaletteFemalePtr uint32
-	iconSpritePtr         uint32
-	iconSpriteFemalePtr   uint32
+	IconSpritePtr         uint32
+	IconSpriteFemalePtr   uint32
 	footprintPtr          uint32
 	FrontPicSize          uint8
 	FrontPicSizeFemale    uint8
@@ -257,8 +257,8 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.paletteFemalePtr = binary.LittleEndian.Uint32(section[0x6C:0x70]) - POINTER_OFFSET
 	s.ShinyPalettePtr = binary.LittleEndian.Uint32(section[0x70:0x74]) - POINTER_OFFSET
 	s.shinyPaletteFemalePtr = binary.LittleEndian.Uint32(section[0x74:0x78]) - POINTER_OFFSET
-	s.iconSpritePtr = binary.LittleEndian.Uint32(section[0x78:0x7C]) - POINTER_OFFSET
-	s.iconSpriteFemalePtr = binary.LittleEndian.Uint32(section[0x7C:0x80]) - POINTER_OFFSET
+	s.IconSpritePtr = binary.LittleEndian.Uint32(section[0x78:0x7C]) - POINTER_OFFSET
+	s.IconSpriteFemalePtr = binary.LittleEndian.Uint32(section[0x7C:0x80]) - POINTER_OFFSET
 	s.footprintPtr = binary.LittleEndian.Uint32(section[0x80:0x84]) - POINTER_OFFSET
 	s.FrontPicSize = section[0x84]
 	s.FrontPicSizeFemale = section[0x85]

@@ -5,8 +5,10 @@ import (
 	"acheron-save-parser/gba"
 	"acheron-save-parser/utils"
 	"bufio"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"os"
 	"strings"
 )
@@ -57,6 +59,32 @@ var (
 	}
 )
 
+const (
+	ICON_PALETTES_COUNT = 6
+	PALETTE_SIZE        = 32
+)
+
+func SaveSpeciesIcons(data []byte, s []*gba.SpeciesData, iconPalettesPtr uint32) error {
+	iconPalettes := make([][]color.Color, 0)
+	palPtr := binary.LittleEndian.Uint32(data[iconPalettesPtr:iconPalettesPtr+4]) - gba.POINTER_OFFSET
+	for i := 0; i < ICON_PALETTES_COUNT; i++ {
+		palBytes := data[palPtr+uint32(i*PALETTE_SIZE) : palPtr+uint32(i*PALETTE_SIZE+PALETTE_SIZE)]
+		iconPalettes = append(iconPalettes, utils.ParsePaletteBytes(palBytes))
+	}
+	for i := 0; i < len(s); i++ {
+		if s[i].IconSpritePtr == gba.BAD_POINTER {
+			continue
+		}
+		pal := iconPalettes[s[i].IconPalIndex]
+		iconBytes := data[s[i].IconSpritePtr : s[i].IconSpritePtr+1024]
+		err := utils.Save4bppImageBytes(iconBytes, "build/images/icons/"+fmt.Sprint(i), pal, 32, 32, true)
+		if err != nil {
+			return fmt.Errorf("ERROR SAVING ICON FOR %d: %w", i, err)
+		}
+	}
+	return nil
+}
+
 func SaveSpeciesSprites(data []byte, s []*gba.SpeciesData) error {
 	for i := 0; i < len(s); i++ {
 		if s[i].FrontPicPtr == gba.BAD_POINTER {
@@ -70,7 +98,11 @@ func SaveSpeciesSprites(data []byte, s []*gba.SpeciesData) error {
 		if err != nil {
 			return fmt.Errorf("MISSING PALETTE FOR %d: %w", i, err)
 		}
-		frontPicBytes := data[s[i].FrontPicPtr : s[i].FrontPicPtr+4096]
+		frontPicBytesCompressed := data[s[i].FrontPicPtr : s[i].FrontPicPtr+4096]
+		frontPicBytes, err := utils.DecompressLZ77(frontPicBytesCompressed)
+		if err != nil {
+			return fmt.Errorf("ERROR DECOMPRESSING FRONT PIC FOR %d: %w", i, err)
+		}
 		err = utils.Save4bppImageBytes(frontPicBytes, "build/images/sprites/"+fmt.Sprint(i), pal, 64, 64, true)
 		if err != nil {
 			return fmt.Errorf("ERROR SAVING FRONT PIC FOR %d: %w", i, err)
@@ -79,11 +111,8 @@ func SaveSpeciesSprites(data []byte, s []*gba.SpeciesData) error {
 	return nil
 }
 
-func SaveSpeciesData(filename string, s []*gba.SpeciesData) {
-	if !strings.HasSuffix(filename, ".json") {
-		filename += ".json"
-	}
-	file, err := os.Create("build/" + filename)
+func SaveSpeciesData(filepath string, s []*gba.SpeciesData) {
+	file, err := os.Create(filepath)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return
@@ -199,10 +228,6 @@ func getFlagArray(mon *gba.SpeciesData) []string {
 }
 
 func getSpeciesIdentifier(mon *gba.SpeciesData, index uint16) string {
-	rename := SpeciesRenames[index]
-	if rename != "" {
-		return rename
-	}
 	speciesName := strings.ReplaceAll(
 		strings.ReplaceAll(
 			strings.ToUpper(utils.ToSnakeCase(mon.SpeciesName)),

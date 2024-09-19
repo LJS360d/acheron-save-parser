@@ -165,12 +165,6 @@ func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, wi
 		}
 	}
 
-	// Decompress the LZ77 bytes
-	decompressed, err := DecompressLZ77(bytes)
-	if err != nil {
-		return err
-	}
-
 	// Number of tiles horizontally and vertically
 	tilesX := width / 8
 	tilesY := height / 8
@@ -190,7 +184,7 @@ func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, wi
 		for row := 0; row < 8; row++ {
 			for col := 0; col < 8; col += 2 {
 				byteIndex := tileOffset + row*4 + col/2
-				byteVal := decompressed[byteIndex]
+				byteVal := bytes[byteIndex]
 
 				lowNibble := byteVal & 0xF
 				highNibble := (byteVal >> 4) & 0xF
