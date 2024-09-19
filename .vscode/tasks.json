@@ -3,17 +3,13 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "make run",
+      "label": "Run Species Compare Script",
       "type": "shell",
-      "command": "make",
+      "command": "node",
       "args": [
-        "run"
+        "${workspaceFolder}/scripts/species.mjs"
       ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
       "problemMatcher": []
-    }
+    },
   ]
 }
