@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"image/color"
 	"image/png"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -67,46 +65,28 @@ func DecodeGFStringParallel(text []byte, numGoroutines int) string {
 	return strings.TrimSpace(finalResult)
 }
 
-func LoadPalette(filename string) ([]color.Color, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	var palette color.Palette
-	scanner := bufio.NewScanner(file)
-
-	lineNumber := 0
-	for scanner.Scan() {
-		line := scanner.Text()
-		lineNumber++
-
-		// Skip the first three header lines (JASC-PAL, version, number of colors).
-		if lineNumber <= 3 {
-			continue
-		}
-
-		// Split the RGB components.
-		parts := strings.Split(line, " ")
-		if len(parts) != 3 {
-			continue
-		}
-
-		// Parse the R, G, B values.
-		r, _ := strconv.Atoi(parts[0])
-		g, _ := strconv.Atoi(parts[1])
-		b, _ := strconv.Atoi(parts[2])
-
-		// Append the color to the palette.
-		palette = append(palette, color.RGBA{uint8(r), uint8(g), uint8(b), 255})
+func ParsePaletteBytes(data []byte) []color.Color {
+	if len(data)%2 != 0 {
+		panic("Palette data size must be even")
 	}
 
-	if err := scanner.Err(); err != nil {
-		return nil, err
+	var palette []color.Color
+	reader := bytes.NewReader(data)
+
+	for i := 0; i < len(data); i += 2 {
+		var col uint16
+		binary.Read(reader, binary.LittleEndian, &col)
+
+		// GBA palette is BGR555
+		b := uint8((col>>10)&0x1F) << 3
+		g := uint8((col>>5)&0x1F) << 3
+		r := uint8(col&0x1F) << 3
+
+		// Append the color to the palette
+		palette = append(palette, color.RGBA{R: r, G: g, B: b, A: 255})
 	}
 
-	return palette, nil
+	return palette
 }
 
 func DecompressLZ77(input []byte) ([]byte, error) {
@@ -171,13 +151,24 @@ func DecompressLZ77(input []byte) ([]byte, error) {
 	return decompressed.Bytes(), nil
 }
 
-func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, width, height int) {
+func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, width, height int, transparentBg bool) error {
 	img := image.NewPaletted(image.Rect(0, 0, width, height), palette)
+
+	// Set transparency for the first color in the palette
+	if transparentBg && len(img.Palette) > 0 {
+		transparentColor := img.Palette[0]
+		img.Palette[0] = color.RGBA{
+			R: transparentColor.(color.RGBA).R,
+			G: transparentColor.(color.RGBA).G,
+			B: transparentColor.(color.RGBA).B,
+			A: 0, // Set alpha to 0 (transparent)
+		}
+	}
 
 	// Decompress the LZ77 bytes
 	decompressed, err := DecompressLZ77(bytes)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Number of tiles horizontally and vertically
@@ -216,12 +207,13 @@ func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, wi
 	// Save the resulting image as a PNG file
 	file, err := os.Create(savename + ".png")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
 	err = png.Encode(file, img)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }

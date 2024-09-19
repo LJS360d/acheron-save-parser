@@ -1,12 +1,8 @@
 package gba
 
 import (
-	"acheron-save-parser/utils"
-	"bytes"
 	"encoding/binary"
 	"fmt"
-	"image/color"
-	"os"
 )
 
 const (
@@ -225,20 +221,6 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	Abilities = a
 	s := ParseSpeciesInfoBytes(data, int(g.SpeciesInfoPtr), int(g.SpeciesCount))
 	Species = s
-	for i := 1; i < 1520; i++ {
-		decompressedPalBytes, err := utils.DecompressLZ77(data[s[i].palettePtr : s[i].palettePtr+40])
-		if err != nil {
-			fmt.Println("Error decompressing palette for", i, s[i].SpeciesName)
-			os.Exit(1)
-		}
-		pal := ParseGBAPal(decompressedPalBytes)
-		if err != nil {
-			fmt.Println("Missing palette for", i, s[i].SpeciesName)
-			os.Exit(1)
-		}
-		frontPicBytes := data[s[i].frontPicPtr : s[i].frontPicPtr+4096]
-		utils.Save4bppImageBytes(frontPicBytes, "assets/images/"+fmt.Sprint(i), pal, 64, 64)
-	}
 	i := ParseItemsInfoBytes(data, int(g.ItemsPtr), int(g.ItemsCount))
 	Items = i
 	m := ParseMovesInfoBytes(data, int(g.MovesPtr), int(g.MovesCount))
@@ -248,28 +230,4 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	n := ParseNaturesInfoBytes(data, int(NaturesPtr), int(NaturesCount))
 	Natures = n
 	return g
-}
-
-func ParseGBAPal(data []byte) []color.Color {
-	if len(data)%2 != 0 {
-		panic("Palette data size must be even")
-	}
-
-	var palette []color.Color
-	reader := bytes.NewReader(data)
-
-	for i := 0; i < len(data); i += 2 {
-		var col uint16
-		binary.Read(reader, binary.LittleEndian, &col)
-
-		// GBA palette is BGR555
-		b := uint8((col>>10)&0x1F) << 3
-		g := uint8((col>>5)&0x1F) << 3
-		r := uint8(col&0x1F) << 3
-
-		// Append the color to the palette
-		palette = append(palette, color.RGBA{R: r, G: g, B: b, A: 255})
-	}
-
-	return palette
 }
