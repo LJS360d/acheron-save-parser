@@ -60,9 +60,39 @@ var (
 )
 
 const (
-	ICON_PALETTES_COUNT = 6
-	PALETTE_SIZE        = 32
+	ICON_PALETTES_COUNT     = 6
+	PALETTE_SIZE            = 32
+	COMPRESSED_PALETTE_SIZE = 40 // yes compressed is bigger than uncompressed, gamefreak probably had a reason to compress otherwise they just had the big stupid
 )
+
+func SaveItemsIcons(data []byte, items []*gba.ItemData) error {
+	for i := 0; i < len(items); i++ {
+		if items[i].IconPalettePtr == gba.BAD_POINTER {
+			fmt.Println("MISSING ITEM PALETTE FOR", i, items[i].Name)
+			continue
+		}
+		if items[i].IconPicPtr == gba.BAD_POINTER {
+			fmt.Println("MISSING ITEM PIC FOR", i, items[i].Name)
+			continue
+		}
+		compressedPalBytes := data[items[i].IconPalettePtr : items[i].IconPalettePtr+COMPRESSED_PALETTE_SIZE]
+		palBytes, err := utils.DecompressLZ77(compressedPalBytes)
+		if err != nil {
+			return fmt.Errorf("ERROR DECOMPRESSING PALETTE FOR %d: %w", i, err)
+		}
+		pal := utils.ParsePaletteBytes(palBytes)
+		compressedIconBytes := data[items[i].IconPicPtr : items[i].IconPicPtr+292]
+		iconBytes, err := utils.DecompressLZ77(compressedIconBytes)
+		if err != nil {
+			return fmt.Errorf("ERROR DECOMPRESSING ICON FOR %d: %w", i, err)
+		}
+		err = utils.Save4bppImageBytes(iconBytes, "build/images/items/icons/"+fmt.Sprint(i), pal, 24, 24, true)
+		if err != nil {
+			return fmt.Errorf("ERROR SAVING ITEM ICON FOR %d: %w", i, err)
+		}
+	}
+	return nil
+}
 
 func SaveSpeciesIcons(data []byte, s []*gba.SpeciesData, iconPalettesPtr uint32) error {
 	iconPalettes := make([][]color.Color, 0)
@@ -77,9 +107,9 @@ func SaveSpeciesIcons(data []byte, s []*gba.SpeciesData, iconPalettesPtr uint32)
 		}
 		pal := iconPalettes[s[i].IconPalIndex]
 		iconBytes := data[s[i].IconSpritePtr : s[i].IconSpritePtr+1024]
-		err := utils.Save4bppImageBytes(iconBytes, "build/images/icons/"+fmt.Sprint(i), pal, 32, 32, true)
+		err := utils.Save4bppImageBytes(iconBytes, "build/images/pokemon/icons/"+fmt.Sprint(i), pal, 32, 32, true)
 		if err != nil {
-			return fmt.Errorf("ERROR SAVING ICON FOR %d: %w", i, err)
+			return fmt.Errorf("ERROR SAVING POKEMON ICON FOR %d: %w", i, err)
 		}
 	}
 	return nil
@@ -90,32 +120,31 @@ func SaveSpeciesSprites(data []byte, s []*gba.SpeciesData) error {
 		if s[i].FrontPicPtr == gba.BAD_POINTER {
 			continue
 		}
-		decompressedPalBytes, err := utils.DecompressLZ77(data[s[i].PalettePtr : s[i].PalettePtr+40])
+		decompressedPalBytes, err := utils.DecompressLZ77(data[s[i].PalettePtr : s[i].PalettePtr+COMPRESSED_PALETTE_SIZE])
 		if err != nil {
-			return fmt.Errorf("ERROR DECOMPRESSING PALETTE FOR %d: %w", i, err)
+			return fmt.Errorf("ERROR DECOMPRESSING POKEMON PALETTE FOR %d: %w", i, err)
 		}
 		pal := utils.ParsePaletteBytes(decompressedPalBytes)
 		if err != nil {
-			return fmt.Errorf("MISSING PALETTE FOR %d: %w", i, err)
+			return fmt.Errorf("MISSING POKEMON PALETTE FOR %d: %w", i, err)
 		}
 		frontPicBytesCompressed := data[s[i].FrontPicPtr : s[i].FrontPicPtr+4096]
 		frontPicBytes, err := utils.DecompressLZ77(frontPicBytesCompressed)
 		if err != nil {
-			return fmt.Errorf("ERROR DECOMPRESSING FRONT PIC FOR %d: %w", i, err)
+			return fmt.Errorf("ERROR DECOMPRESSING POKEMON FRONT PIC FOR %d: %w", i, err)
 		}
-		err = utils.Save4bppImageBytes(frontPicBytes, "build/images/sprites/"+fmt.Sprint(i), pal, 64, 64, true)
+		err = utils.Save4bppImageBytes(frontPicBytes, "build/images/pokemon/sprites/"+fmt.Sprint(i), pal, 64, 64, true)
 		if err != nil {
-			return fmt.Errorf("ERROR SAVING FRONT PIC FOR %d: %w", i, err)
+			return fmt.Errorf("ERROR SAVING POKEMON FRONT PIC FOR %d: %w", i, err)
 		}
 	}
 	return nil
 }
 
-func SaveSpeciesData(filepath string, s []*gba.SpeciesData) {
+func SaveSpeciesData(filepath string, s []*gba.SpeciesData) error {
 	file, err := os.Create(filepath)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
+		return fmt.Errorf("ERROR CREATING FILE: %w", err)
 	}
 	defer file.Close()
 
@@ -194,8 +223,9 @@ func SaveSpeciesData(filepath string, s []*gba.SpeciesData) {
 		}))
 	err = writer.Flush()
 	if err != nil {
-		fmt.Println("Error writing to file:", err)
+		return fmt.Errorf("ERROR WRITING TO FILE: %w", err)
 	}
+	return nil
 }
 
 func getFlagArray(mon *gba.SpeciesData) []string {

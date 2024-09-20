@@ -21,8 +21,8 @@ type ItemData struct {
 	Type            uint8
 	BattleUsage     uint8
 	FlingPower      uint8
-	iconPicPtr      uint32
-	iconPalettePtr  uint32
+	IconPicPtr      uint32
+	IconPalettePtr  uint32
 }
 
 const (
@@ -56,6 +56,7 @@ func (i *ItemData) new(section []byte /* 80 bytes */) {
 	i.Type = section[66]
 	i.BattleUsage = section[67]
 	i.FlingPower = section[68]
-	i.iconPicPtr = binary.LittleEndian.Uint32(section[69:73]) - POINTER_OFFSET
-	i.iconPalettePtr = binary.LittleEndian.Uint32(section[73:77]) - POINTER_OFFSET
+	// more padding
+	i.IconPicPtr = binary.LittleEndian.Uint32(section[72:76]) - POINTER_OFFSET
+	i.IconPalettePtr = binary.LittleEndian.Uint32(section[76:80]) - POINTER_OFFSET
 }

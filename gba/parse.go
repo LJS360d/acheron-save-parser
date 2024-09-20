@@ -2,7 +2,6 @@ package gba
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 const (
@@ -115,7 +114,6 @@ type GbaData struct {
 }
 
 func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
-	fmt.Println(data[0xB2])
 	g := &GbaData{
 		// --- GF Header ---
 		RomEntryPoint: binary.LittleEndian.Uint32(data[0x00:0x04]),
