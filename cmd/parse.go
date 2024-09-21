@@ -264,21 +264,145 @@ func getSpeciesIdentifier(mon *gba.SpeciesData, index uint16) string {
 			" ", "_"),
 		"'", "_")
 	flagMap := map[bool]string{
+		mon.IsAlolanForm:      "ALOLAN",
+		mon.IsGalarianForm:    "GALARIAN",
+		mon.IsHisuianForm:     "HISUIAN",
+		mon.IsPaldeanForm:     "PALDEAN",
 		mon.IsTotem:           "TOTEM",
 		mon.IsMegaEvolution:   "MEGA",
 		mon.IsPrimalReversion: "PRIMAL",
 		mon.IsUltraBurst:      "ULTRA",
 		mon.IsGigantamax:      "GIGANTAMAX",
 		mon.IsTeraForm:        "TERA",
-		mon.IsAlolanForm:      "ALOLAN",
-		mon.IsGalarianForm:    "GALARIAN",
-		mon.IsHisuianForm:     "HISUIAN",
-		mon.IsPaldeanForm:     "PALDEAN",
 	}
 	for condition, flag := range flagMap {
 		if condition {
-			return speciesName + "_" + flag
+			speciesName += "_" + flag
 		}
 	}
 	return speciesName
+}
+
+func SaveEvolutionsData(filepath string, s []*gba.SpeciesData) error {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return fmt.Errorf("ERROR CREATING FILE: %w", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+
+	t := BuildEvolutionTrees(s)
+	json.NewEncoder(writer).Encode(utils.MapSlice(t, func(e EvolutionTree, i int) JSON {
+		return JSON{
+			"family": e.Family,
+			"evolutions": utils.MapSlice(e.Evolutions, func(ep EvolutionPath, i int) JSON {
+				return JSON{
+					"from": ep.From,
+					"to": utils.MapSlice(ep.To, func(outcome EvolutionOutcome, i int) JSON {
+						return JSON{
+							"species": outcome.Species,
+							"methods": utils.MapSlice(outcome.Methods, func(method EvolutionMethod, i int) JSON {
+								return JSON{
+									"method": method.Method,
+									"clause": method.Clause,
+								}
+							}),
+						}
+					}),
+				}
+			}),
+		}
+	}))
+
+	err = writer.Flush()
+	if err != nil {
+		return fmt.Errorf("ERROR WRITING TO FILE: %w", err)
+	}
+	return nil
+}
+
+type EvolutionMethod struct {
+	Method uint16
+	Clause uint16
+}
+
+type EvolutionOutcome struct {
+	Species uint16
+	Methods []EvolutionMethod
+}
+
+type EvolutionPath struct {
+	From uint16
+	To   []EvolutionOutcome
+}
+
+type EvolutionTree struct {
+	Family     uint16
+	Evolutions []EvolutionPath
+}
+
+func BuildEvolutionTrees(speciesData []*gba.SpeciesData) []EvolutionTree {
+	// Step 1: Collect all species and paths
+	paths := []EvolutionPath{}
+	speciesSet := make(map[uint16]struct{})
+
+	for familyID, species := range speciesData {
+		familyID16 := uint16(familyID)
+		for _, evo := range species.Evolutions {
+			// Create EvolutionOutcome and EvolutionPath for each evolution
+			outcome := EvolutionOutcome{
+				Species: evo.TargetSpecies,
+				Methods: []EvolutionMethod{
+					{
+						Method: evo.Method,
+						Clause: evo.Param,
+					},
+				},
+			}
+			path := EvolutionPath{
+				From: familyID16,
+				To:   []EvolutionOutcome{outcome},
+			}
+
+			paths = append(paths, path)
+			speciesSet[familyID16] = struct{}{}
+			speciesSet[evo.TargetSpecies] = struct{}{}
+		}
+	}
+
+	// Step 2: Identify root species (those that don't appear as 'To')
+	potentialRoots := make(map[uint16]struct{})
+	for species := range speciesSet {
+		potentialRoots[species] = struct{}{}
+	}
+	for _, path := range paths {
+		for _, outcome := range path.To {
+			delete(potentialRoots, outcome.Species)
+		}
+	}
+
+	// Step 3: Build trees from roots
+	var trees []EvolutionTree
+	for root := range potentialRoots {
+		tree := EvolutionTree{
+			Family:     root,
+			Evolutions: []EvolutionPath{},
+		}
+		buildTree(root, &tree, paths)
+		trees = append(trees, tree)
+	}
+
+	return trees
+}
+
+func buildTree(current uint16, tree *EvolutionTree, paths []EvolutionPath) {
+	for _, path := range paths {
+		if path.From == current {
+			tree.Evolutions = append(tree.Evolutions, path)
+			for _, outcome := range path.To {
+				buildTree(outcome.Species, tree, paths)
+			}
+		}
+	}
 }

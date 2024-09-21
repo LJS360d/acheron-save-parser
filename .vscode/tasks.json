@@ -9,7 +9,6 @@
       "args": [
         "run",
         "${workspaceFolder}/cmd",
-        "-sav='./test/sav/pokeemerald_2.sav'",
         "-gba='./test/gba/pokeemerald.gba'",
         "-o='species'"
       ],
@@ -25,7 +24,6 @@
       "args": [
         "run",
         "${workspaceFolder}/cmd",
-        "-sav='./test/sav/pokeemerald_2.sav'",
         "-gba='./test/gba/rhh.gba'",
         "-o='species'"
       ],
@@ -35,11 +33,31 @@
       "problemMatcher": []
     },
     {
-      "label": "Generate Docs data",
+      "label": "Generate Pokemon Docs data",
       "type": "shell",
       "command": "node",
       "args": [
-        "${workspaceFolder}/scripts/species.mjs",
+        "${workspaceFolder}/scripts/build_compare.mjs",
+        "-new='./build/our_species.json'",
+        "-old='./build/rhh_species.json'",
+        "-id='id'",
+        "-o='./build/pokemon.json,./../docs/src/data/pokemon.json'"
+      ],
+      "group": {
+        "kind": "none",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Evolutions Docs data",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/scripts/build_compare.mjs",
+        "-new='./build/our_evolutions.json'",
+        "-old='./build/rhh_evolutions.json'",
+        "-id='family'",
+        "-o='./build/evolutions.json,./../docs/src/data/evolutions.json'"
       ],
       "group": {
         "kind": "none",

@@ -12,6 +12,10 @@ import (
 	"sync"
 )
 
+const (
+	JSON_BUILDS_PREFIX = "our_"
+)
+
 func main() {
 	savFile := flag.String("s", "", "Path to the save file (.sav)")
 	gbaFile := flag.String("g", "", "Path to the GBA ROM file (.gba)")
@@ -48,54 +52,41 @@ func main() {
 	var wg sync.WaitGroup
 
 	if slices.Contains(selectedOutputs, "species") {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			log.Println("Saving species data...")
-			err := SaveSpeciesData("build/species_rhh.json", gba.Species[1:])
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			log.Println("Saved species data!")
-		}()
+		buildTask(&wg, "Species data", func() error {
+			return SaveSpeciesData("build/"+JSON_BUILDS_PREFIX+"species.json", gba.Species[1:])
+		})
+
+		buildTask(&wg, "Evolutions data", func() error {
+			return SaveEvolutionsData("build/"+JSON_BUILDS_PREFIX+"evolutions.json", gba.Species[1:])
+		})
 	}
 
 	if slices.Contains(selectedOutputs, "sprites") {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			log.Println("Saving Pokemon sprites...")
-			err := SaveSpeciesSprites(gbaBytes, gba.Species[1:])
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			log.Println("Saved Pokemon sprites!")
-		}()
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			log.Println("Saving Pokemon icons...")
-			err := SaveSpeciesIcons(gbaBytes, gba.Species[1:], g.IconPalettesTablePtr)
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			log.Println("Saved Pokemon icons!")
-		}()
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			log.Println("Saving Item icons...")
-			err := SaveItemsIcons(gbaBytes, gba.Items[1:])
-			if err != nil {
-				log.Fatal(err)
-				return
-			}
-			log.Println("Saved Item icons!")
-		}()
+		buildTask(&wg, "Pokemon sprites", func() error {
+			return SaveSpeciesSprites(gbaBytes, gba.Species[1:])
+		})
+
+		buildTask(&wg, "Pokemon icons", func() error {
+			return SaveSpeciesIcons(gbaBytes, gba.Species[1:], g.IconPalettesTablePtr)
+		})
+
+		buildTask(&wg, "Item icons", func() error {
+			return SaveItemsIcons(gbaBytes, gba.Items[1:])
+		})
 	}
 
 	wg.Wait()
+}
+
+func buildTask(wg *sync.WaitGroup, taskName string, taskFunc func() error) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		log.Printf("Saving %s...", taskName)
+		if err := taskFunc(); err != nil {
+			log.Fatal(err)
+			return
+		}
+		log.Printf("Saved %s!", taskName)
+	}()
 }
