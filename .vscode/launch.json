@@ -9,9 +9,10 @@
       "program": "${workspaceFolder}/cmd",
       "env": {},
       "args": [
-        "-sav=./test/sav/pokeemerald_2.sav",
-        "-gba=./test/gba/pokeemerald.gba",
-        "-o=species,moves,learnsets,items,sprites"
+        "-sav=test/sav/pokeemerald_2.sav",
+        "-gba=test/gba/pokeemerald.gba",
+        "-o=species,evolutions,moves,learnsets,items,sprites",
+        "-jbp=our_"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"

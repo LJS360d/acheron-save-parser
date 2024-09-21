@@ -216,7 +216,7 @@ func SaveSpeciesData(filepath string, s []*gba.SpeciesData) error {
 				"growthRate":  mon.GrowthRate,
 				"height":      mon.Height,
 				"weight":      mon.Weight,
-				"flags":       jsonconvert.MarshalSlice(getFlagArray(mon)),
+				"flags":       jsonconvert.MarshalSlice(getSpeciesFlags(mon)),
 				"itemCommon":  mon.ItemCommon,
 				"itemRare":    mon.ItemRare,
 			}
@@ -228,7 +228,52 @@ func SaveSpeciesData(filepath string, s []*gba.SpeciesData) error {
 	return nil
 }
 
-func getFlagArray(mon *gba.SpeciesData) []string {
+func SaveMovesData(filepath string, m []*gba.MoveData) error {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return fmt.Errorf("ERROR CREATING FILE: %w", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	json.NewEncoder(writer).Encode(utils.MapSlice(m,
+		func(move *gba.MoveData, i int) JSON {
+			additionalEffects := make([]JSON, move.NumAdditionalEffects)
+			for j := 0; j < int(move.NumAdditionalEffects); j++ {
+				additionalEffects[j] = JSON{
+					"moveEffect":              move.AdditionalEffects[j].MoveEffect,
+					"chance":                  move.AdditionalEffects[j].Chance,
+					"self":                    move.AdditionalEffects[j].Self,
+					"onChargeTurnOnly":        move.AdditionalEffects[j].OnChargeTurnOnly,
+					"onlyIfTargetRaisedStats": move.AdditionalEffects[j].OnlyIfTargetRaisedStats,
+				}
+			}
+			return JSON{
+				"id":                i,
+				"name":              move.Name,
+				"description":       move.Description,
+				"type":              move.Type,
+				"category":          move.Category,
+				"pp":                move.Pp,
+				"power":             move.Power,
+				"accuracy":          move.Accuracy,
+				"effect":            move.Effect,
+				"target":            move.Target,
+				"priority":          move.Priority,
+				"recoil":            move.Recoil,
+				"criticalHitStage":  move.CriticalHitStage,
+				"additionalEffects": jsonconvert.MarshalSlice(additionalEffects),
+				"flags":             jsonconvert.MarshalSlice(getMoveFlags(move)),
+			}
+		}))
+	err = writer.Flush()
+	if err != nil {
+		return fmt.Errorf("ERROR WRITING TO FILE: %w", err)
+	}
+	return nil
+}
+
+func getSpeciesFlags(mon *gba.SpeciesData) []string {
 	flags := []string{}
 
 	flagMap := map[bool]string{
@@ -246,6 +291,59 @@ func getFlagArray(mon *gba.SpeciesData) []string {
 		mon.IsGalarianForm:    "GALARIAN",
 		mon.IsHisuianForm:     "HISUIAN",
 		mon.IsPaldeanForm:     "PALDEAN",
+	}
+
+	for condition, flag := range flagMap {
+		if condition {
+			flags = append(flags, flag)
+		}
+	}
+
+	return flags
+}
+
+func getMoveFlags(move *gba.MoveData) []string {
+	flags := []string{}
+
+	flagMap := map[bool]string{
+		move.AlwaysCriticalHit:                 "ALWAYS_CRITICAL",
+		move.AssistBanned:                      "ASSIST_BANNED",
+		move.BallisticMove:                     "BALLISTIC",
+		move.BitingMove:                        "BITING",
+		move.CantUseTwice:                      "CANT_USE_TWICE",
+		move.MakesContact:                      "CONTACT",
+		move.CopycatBanned:                     "COPYCAT_BANNED",
+		move.DamagesAirborne:                   "DAMAGES_AIRBORNE",
+		move.DamagesUnderground:                "DAMAGES_UNDERGROUND",
+		move.DamagesUnderwater:                 "DAMAGES_UNDERWATER",
+		move.AirborneDoubleDamage:              "DOUBLE_DAMAGE_AIRBORNE",
+		move.EncoreBanned:                      "ENCORE_BANNED",
+		move.ForcePressure:                     "FORCE_PRESSURE",
+		move.GravityBanned:                     "GRAVITY_BANNED",
+		move.HealingMove:                       "HEALING",
+		move.IgnoresTargetDefenseEvasionStages: "IGNORES_DEFENSE_EVASION",
+		move.IgnoresKingsRock:                  "IGNORES_KINGS_ROCK",
+		move.IgnoresProtect:                    "IGNORES_PROTECT",
+		move.IgnoresSubstitute:                 "IGNORES_SUBSTITUTE",
+		move.IgnoresTargetAbility:              "IGNORES_TARGET_ABILITY",
+		move.IgnoreTypeIfFlyingAndUngrounded:   "IGNORES_TYPE_IF_FLYING_UNGROUNDED",
+		move.InstructBanned:                    "INSTRUCT_BANNED",
+		move.MagicCoatAffected:                 "MAGIC_COAT_AFFECTED",
+		move.MeFirstBanned:                     "ME_FIRST_BANNED",
+		move.MetronomeBanned:                   "METRONOME_BANNED",
+		move.MimicBanned:                       "MIMIC_BANNED",
+		move.MinimizeDoubleDamage:              "MINIMIZE_DOUBLE_DAMAGE",
+		move.MirrorMoveBanned:                  "MIRROR_MOVE_BANNED",
+		move.ParentalBondBanned:                "PARENTAL_BOND_BANNED",
+		move.PowderMove:                        "POWDER",
+		move.PulseMove:                         "PULSE",
+		move.SketchBanned:                      "SKETCH_BANNED",
+		move.SkyBattleBanned:                   "SKY_BATTLE_BANNED",
+		move.SleepTalkBanned:                   "SLEEP_TALK_BANNED",
+		move.SlicingMove:                       "SLICING",
+		move.SnatchAffected:                    "SNATCH_AFFECTED",
+		move.SoundMove:                         "SOUND",
+		move.ThawsUser:                         "THAWS_USER",
 	}
 
 	for condition, flag := range flagMap {

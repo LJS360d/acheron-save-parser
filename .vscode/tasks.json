@@ -3,14 +3,15 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Generate species data (Our)",
+      "label": "Generate JSON data (Our)",
       "type": "shell",
       "command": "go",
       "args": [
         "run",
         "${workspaceFolder}/cmd",
-        "-gba='./test/gba/pokeemerald.gba'",
-        "-o='species'"
+        "-gba='test/gba/pokeemerald.gba'",
+        "-o='species,evolutions,moves,learnsets,items'",
+        "-jbp=our_"
       ],
       "group": {
         "kind": "build",
@@ -18,17 +19,31 @@
       "problemMatcher": []
     },
     {
-      "label": "Generate species data (Rhh)",
+      "label": "Generate JSON data (Rhh)",
       "type": "shell",
       "command": "go",
       "args": [
         "run",
         "${workspaceFolder}/cmd",
-        "-gba='./test/gba/rhh1.9.2.gba'",
-        "-o='species'"
+        "-gba='test/gba/rhh1.9.2.gba'",
+        "-o='species,evolutions,moves,learnsets,items'",
+        "-jbp=rhh_"
       ],
       "group": {
         "kind": "build",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate All Docs data",
+      "type": "shell",
+      "dependsOn": [
+        "Generate Pokemon Docs data",
+        "Generate Evolutions Docs data",
+        "Generate Moves Docs data"
+      ],
+      "group": {
+        "kind": "none",
       },
       "problemMatcher": []
     },
@@ -41,7 +56,8 @@
         "-new='./build/our_species.json'",
         "-old='./build/rhh_species.json'",
         "-id='id'",
-        "-o='./build/pokemon.json,./../docs/src/data/pokemon.json'"
+        "-o='./build/pokemon.json,./../docs/src/data/pokemon.json'",
+        "-d"
       ],
       "group": {
         "kind": "none",
@@ -57,7 +73,27 @@
         "-new='./build/our_evolutions.json'",
         "-old='./build/rhh_evolutions.json'",
         "-id='family'",
-        "-o='./build/evolutions.json,./../docs/src/data/evolutions.json'"
+        "-o='./build/evolutions.json,./../docs/src/data/evolutions.json'",
+        "-s",
+        "-d"
+      ],
+      "group": {
+        "kind": "none",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Moves Docs data",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/scripts/build_compare.mjs",
+        "-new='./build/our_moves.json'",
+        "-old='./build/rhh_moves.json'",
+        "-id='id'",
+        "-o='./build/moves.json,./../docs/src/data/moves.json'",
+        "-s",
+        "-d"
       ],
       "group": {
         "kind": "none",

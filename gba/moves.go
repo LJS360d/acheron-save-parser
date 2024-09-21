@@ -51,7 +51,7 @@ type MoveData struct {
 	DamagesUnderground                bool
 	DamagesUnderwater                 bool
 	DamagesAirborne                   bool
-	DamagesAirborneDoubleDamage       bool
+	AirborneDoubleDamage              bool
 	IgnoreTypeIfFlyingAndUngrounded   bool
 	ThawsUser                         bool
 	IgnoresSubstitute                 bool
@@ -77,6 +77,7 @@ type MoveData struct {
 	Argument uint32
 	// primary/secondary effects
 	additionalEffectsPtr uint32
+	AdditionalEffects    []*MoveAdditionalEffect
 	// contest parameters
 	ContestEffect         uint8
 	ContestCategory       uint8 // 3 bits
@@ -86,7 +87,8 @@ type MoveData struct {
 }
 
 const (
-	MOVE_INFO_SIZE = 52
+	MOVE_INFO_SIZE               = 52
+	MOVE_ADDITIONAL_EFFECTS_SIZE = 4
 )
 
 func ParseMovesInfoBytes(data []byte, offset int, count int) []*MoveData {
@@ -97,6 +99,9 @@ func ParseMovesInfoBytes(data []byte, offset int, count int) []*MoveData {
 		moves[i] = m
 		m.Name = utils.DecodePointerString(data, m.namePtr)
 		m.Description = utils.DecodePointerString(data, m.descriptionPtr)
+		if m.additionalEffectsPtr != BAD_POINTER {
+			m.AdditionalEffects = ParseMoveAdditionalEffects(data, m.additionalEffectsPtr, m.NumAdditionalEffects)
+		}
 	}
 	return moves
 }
@@ -173,7 +178,7 @@ func (m *MoveData) new(section []byte /* 52 bytes */) {
 	// 1st bit of [25]
 	m.DamagesAirborne = section[25]&0b1 == 1
 	// 2nd bit of [25]
-	m.DamagesAirborneDoubleDamage = section[25]&0b10>>1 == 1
+	m.AirborneDoubleDamage = section[25]&0b10>>1 == 1
 	// 3rd bit of [25]
 	m.IgnoreTypeIfFlyingAndUngrounded = section[25]&0b100>>2 == 1
 	// 4th bit of [25]
@@ -222,4 +227,28 @@ func (m *MoveData) new(section []byte /* 52 bytes */) {
 	// rest of [42] is padding
 	copy(m.ContestComboMoves[:], section[43:48])
 	m.battleAnimScriptPtr = binary.LittleEndian.Uint32(section[48:52]) - POINTER_OFFSET
+}
+
+type MoveAdditionalEffect struct {
+	MoveEffect              uint16
+	Self                    bool
+	OnlyIfTargetRaisedStats bool
+	OnChargeTurnOnly        bool
+	Chance                  uint8
+}
+
+func ParseMoveAdditionalEffects(data []byte, offset uint32, count uint8) []*MoveAdditionalEffect {
+	effects := make([]*MoveAdditionalEffect, 0)
+	for i := 0; i < int(count); i++ {
+		ix := offset + uint32(i)*MOVE_ADDITIONAL_EFFECTS_SIZE
+		effect := &MoveAdditionalEffect{
+			MoveEffect:              binary.LittleEndian.Uint16(data[ix : ix+2]),
+			Self:                    data[ix+2]&0x01 != 0,
+			OnlyIfTargetRaisedStats: data[ix+2]&0x02 != 0,
+			OnChargeTurnOnly:        data[ix+2]&0x04 != 0,
+			Chance:                  data[ix+3],
+		}
+		effects = append(effects, effect)
+	}
+	return effects
 }

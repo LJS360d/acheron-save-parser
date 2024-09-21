@@ -13,17 +13,19 @@ import (
 )
 
 var (
-	JSON_BUILDS_PREFIX = "our_"
+	JSON_BUILDS_PREFIX = ""
 )
 
 func main() {
 	savFile := flag.String("s", "", "Path to the save file (.sav)")
 	gbaFile := flag.String("g", "", "Path to the GBA ROM file (.gba)")
-	outputs := flag.String("o", "", "Comma-separated list of outputs to generate (e.g., species,moves,learnsets,items,sprites)")
+	outputs := flag.String("o", "", "Comma-separated list of outputs to generate (e.g., species,evolutions,moves,learnsets,items,sprites)")
+	jsonBuildsPrefix := flag.String("jbp", "", "Prefix to use for JSON builds (generated files under build will have this prefix)")
 
 	flag.StringVar(savFile, "sav", "", "Path to the save file (.sav)")
 	flag.StringVar(gbaFile, "gba", "", "Path to the GBA ROM file (.gba)")
-	flag.StringVar(outputs, "output", "", "Comma-separated list of outputs to generate (e.g., species,moves,learnsets,items,sprites)")
+	flag.StringVar(outputs, "output", "", "Comma-separated list of outputs to generate (e.g., species,evolutions,moves,learnsets,items,sprites)")
+	flag.StringVar(jsonBuildsPrefix, "jsonBuildsPrefix", "", "Prefix to use for JSON builds (generated files under build will have this prefix)")
 
 	flag.Parse()
 	fmt.Printf("Save file path: %s\n", *savFile)
@@ -32,6 +34,10 @@ func main() {
 
 	if *gbaFile == "" {
 		log.Fatal("-g/-gba flag is required.")
+	}
+
+	if *jsonBuildsPrefix != "" {
+		JSON_BUILDS_PREFIX = *jsonBuildsPrefix
 	}
 
 	gbaBytes, err := os.ReadFile(*gbaFile)
@@ -51,13 +57,21 @@ func main() {
 
 	var wg sync.WaitGroup
 
+	if slices.Contains(selectedOutputs, "evolutions") {
+		buildTask(&wg, "Evolutions data", func() error {
+			return SaveEvolutionsData("build/"+JSON_BUILDS_PREFIX+"evolutions.json", gba.Species)
+		})
+	}
+
+	if slices.Contains(selectedOutputs, "moves") {
+		buildTask(&wg, "Moves data", func() error {
+			return SaveMovesData("build/"+JSON_BUILDS_PREFIX+"moves.json", gba.Moves[1:])
+		})
+	}
+
 	if slices.Contains(selectedOutputs, "species") {
 		buildTask(&wg, "Species data", func() error {
 			return SaveSpeciesData("build/"+JSON_BUILDS_PREFIX+"species.json", gba.Species[1:])
-		})
-
-		buildTask(&wg, "Evolutions data", func() error {
-			return SaveEvolutionsData("build/"+JSON_BUILDS_PREFIX+"evolutions.json", gba.Species)
 		})
 	}
 
