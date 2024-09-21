@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-const (
+var (
 	JSON_BUILDS_PREFIX = "our_"
 )
 
@@ -57,7 +57,7 @@ func main() {
 		})
 
 		buildTask(&wg, "Evolutions data", func() error {
-			return SaveEvolutionsData("build/"+JSON_BUILDS_PREFIX+"evolutions.json", gba.Species[1:])
+			return SaveEvolutionsData("build/"+JSON_BUILDS_PREFIX+"evolutions.json", gba.Species)
 		})
 	}
 

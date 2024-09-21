@@ -51,6 +51,8 @@ newArr.forEach(obj => {
   obj.old = oldObj ?? null;
 });
 
+newArr.sort((a, b) => a[config.objectId] - b[config.objectId]);
+
 // Write to the output files
 config.outputs.forEach(outputPath => {
   writeFileSync(outputPath, JSON.stringify(newArr, null, 2));

@@ -24,7 +24,7 @@
       "args": [
         "run",
         "${workspaceFolder}/cmd",
-        "-gba='./test/gba/rhh.gba'",
+        "-gba='./test/gba/rhh1.9.2.gba'",
         "-o='species'"
       ],
       "group": {

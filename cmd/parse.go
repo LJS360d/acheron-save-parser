@@ -343,14 +343,13 @@ type EvolutionTree struct {
 }
 
 func BuildEvolutionTrees(speciesData []*gba.SpeciesData) []EvolutionTree {
-	// Step 1: Collect all species and paths
-	paths := []EvolutionPath{}
+	// Step 1: Collect all species and paths, grouped by the "from" species
+	pathMap := make(map[uint16]*EvolutionPath)
 	speciesSet := make(map[uint16]struct{})
 
 	for familyID, species := range speciesData {
 		familyID16 := uint16(familyID)
 		for _, evo := range species.Evolutions {
-			// Create EvolutionOutcome and EvolutionPath for each evolution
 			outcome := EvolutionOutcome{
 				Species: evo.TargetSpecies,
 				Methods: []EvolutionMethod{
@@ -360,15 +359,26 @@ func BuildEvolutionTrees(speciesData []*gba.SpeciesData) []EvolutionTree {
 					},
 				},
 			}
-			path := EvolutionPath{
-				From: familyID16,
-				To:   []EvolutionOutcome{outcome},
+
+			// Group evolutions by 'from' species
+			if path, exists := pathMap[familyID16]; exists {
+				path.To = append(path.To, outcome)
+			} else {
+				pathMap[familyID16] = &EvolutionPath{
+					From: familyID16,
+					To:   []EvolutionOutcome{outcome},
+				}
 			}
 
-			paths = append(paths, path)
 			speciesSet[familyID16] = struct{}{}
 			speciesSet[evo.TargetSpecies] = struct{}{}
 		}
+	}
+
+	// Convert the map to a slice of EvolutionPath
+	paths := make([]EvolutionPath, 0, len(pathMap))
+	for _, path := range pathMap {
+		paths = append(paths, *path)
 	}
 
 	// Step 2: Identify root species (those that don't appear as 'To')

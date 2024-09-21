@@ -11,7 +11,7 @@
       "args": [
         "-sav=./test/sav/pokeemerald_2.sav",
         "-gba=./test/gba/pokeemerald.gba",
-        "-o=species"
+        "-o=species,moves,learnsets,items,sprites"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
