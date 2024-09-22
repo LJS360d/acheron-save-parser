@@ -39,6 +39,7 @@
       "type": "shell",
       "dependsOn": [
         "Generate Pokemon Docs data",
+        "Generate Learnsets Docs data",
         "Generate Evolutions Docs data",
         "Generate Moves Docs data",
         "Generate Items Docs data"
@@ -58,6 +59,23 @@
         "-old='./build/rhh_species.json'",
         "-id='id'",
         "-o='./build/pokemon.json,./../docs/src/data/pokemon.json'",
+        "-d"
+      ],
+      "group": {
+        "kind": "none",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Learnsets Docs data",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/scripts/build_compare.mjs",
+        "-new='./build/our_learnsets.json'",
+        "-old='./build/rhh_learnsets.json'",
+        "-id='species'",
+        "-o='./build/learnsets.json,./../docs/src/data/learnsets.json'",
         "-d"
       ],
       "group": {

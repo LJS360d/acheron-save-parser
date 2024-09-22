@@ -2,9 +2,13 @@ package gba
 
 import (
 	"encoding/binary"
+	"log"
+	"runtime"
+	"strconv"
 )
 
 const (
+	wasm_build     = runtime.GOARCH == "wasm" && runtime.GOOS == "js"
 	POINTER_OFFSET = 0x08000000
 	BAD_POINTER    = 0x0f8000000
 )
@@ -104,7 +108,7 @@ type GbaData struct {
 	MajorVersion   uint8
 	MinorVersion   uint8
 	PatchVersion   uint8
-	TaggedVersion  uint8
+	TaggedVersion  bool
 	MovesCount     uint16 // 848
 	SpeciesCount   uint16 // 1524
 	AbilitiesCount uint16 // 311
@@ -207,7 +211,7 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		MajorVersion:   data[0x20A],
 		MinorVersion:   data[0x20B],
 		PatchVersion:   data[0x20C],
-		TaggedVersion:  data[0x20D],
+		TaggedVersion:  data[0x20D] == 0x01,
 		MovesCount:     binary.LittleEndian.Uint16(data[0x20E:0x210]),
 		SpeciesCount:   binary.LittleEndian.Uint16(data[0x210:0x212]),
 		AbilitiesCount: binary.LittleEndian.Uint16(data[0x212:0x214]),
@@ -215,6 +219,10 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		ItemsCount:     binary.LittleEndian.Uint16(data[0x218:0x21A]),
 		ItemNameLength: data[0x21A],
 	}
+	tagStatus := map[bool]string{true: "tagged", false: "untagged"}[g.TaggedVersion]
+	version := strconv.Itoa(int(g.MajorVersion)) + "." + strconv.Itoa(int(g.MinorVersion)) + "." + strconv.Itoa(int(g.PatchVersion))
+	log.Printf("Detected Emerald Expansion version: %s (%s)\n", version, tagStatus)
+
 	a := ParseAbilitiesBytes(data, int(g.AbilitiesPtr), int(g.AbilitiesCount))
 	Abilities = a
 	s := ParseSpeciesInfoBytes(data, int(g.SpeciesInfoPtr), int(g.SpeciesCount))
@@ -223,9 +231,11 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	Items = i
 	m := ParseMovesInfoBytes(data, int(g.MovesPtr), int(g.MovesCount))
 	Moves = m
-	NaturesPtr := 0x08690498 - POINTER_OFFSET // (08/09/2024) on latest commit in rrh/upcoming 0x0869797c is the new offset
-	NaturesCount := 25
-	n := ParseNaturesInfoBytes(data, int(NaturesPtr), int(NaturesCount))
-	Natures = n
+	if wasm_build {
+		NaturesPtr := 0x08690498 - POINTER_OFFSET // (08/09/2024) on latest commit in rrh/upcoming 0x0869797c is the new offset
+		NaturesCount := 25
+		n := ParseNaturesInfoBytes(data, int(NaturesPtr), int(NaturesCount))
+		Natures = n
+	}
 	return g
 }

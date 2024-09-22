@@ -94,12 +94,9 @@ type SpeciesData struct {
 	TMIlliterate      bool
 	IsFrontierBanned  bool
 	// Padding4                 14 bits of padding
-	levelUpLearnsetPtr       uint32
-	LevelUpLearnset          []*LevelUpMove
-	teachableLearnsetPtr     uint32
-	TeachableLearnset        []uint16
-	eggMoveLearnsetPtr       uint32
-	EggMoveLearnset          []uint16
+	LevelUpLearnsetPtr       uint32
+	TeachableLearnsetPtr     uint32
+	EggMoveLearnsetPtr       uint32
 	evolutionsPtr            uint32
 	Evolutions               []*Evolution
 	formSpeciesIdTablePtr    uint32
@@ -131,9 +128,6 @@ func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
 		s.FormSpeciesIdTable = parseFormSpeciesIdTable(data, s.formSpeciesIdTablePtr)
 		s.FormChangeTable = parseFormChangeTable(data, s.formChangeTablePtr)
 		s.Evolutions = parseEvolutions(data, s.evolutionsPtr)
-		s.LevelUpLearnset = parseLevelUpLearnset(data, s.levelUpLearnsetPtr)
-		s.TeachableLearnset = parseLearnset(data, s.teachableLearnsetPtr)
-		s.EggMoveLearnset = parseLearnset(data, s.eggMoveLearnsetPtr)
 	}
 	return species
 }
@@ -206,45 +200,6 @@ func parseEvolutions(data []byte, offset uint32) []*Evolution {
 		}
 	}
 	return evolutions
-}
-
-type LevelUpMove struct {
-	Move  uint16
-	Level uint16
-}
-
-func parseLevelUpLearnset(data []byte, offset uint32) []*LevelUpMove {
-	learnset := make([]*LevelUpMove, 0)
-	if offset == BAD_POINTER || offset >= uint32(len(data)) {
-		return learnset
-	}
-	const LEVEL_UP_MOVE_SIZE = 4
-	for i := offset; i+LEVEL_UP_MOVE_SIZE < uint32(len(data)); i += LEVEL_UP_MOVE_SIZE {
-		move := &LevelUpMove{
-			Move:  binary.LittleEndian.Uint16(data[i:]),
-			Level: binary.LittleEndian.Uint16(data[i+2:]),
-		}
-		if move.Move == 0xFFFF && move.Level == 0 {
-			break
-		}
-		learnset = append(learnset, move)
-	}
-	return learnset
-}
-
-func parseLearnset(data []byte, offset uint32) []uint16 {
-	learnset := make([]uint16, 0)
-	if offset == BAD_POINTER || offset >= uint32(len(data)) {
-		return learnset
-	}
-	for i := offset; i+2 < uint32(len(data)); i += 2 {
-		move := binary.LittleEndian.Uint16(data[i+2:])
-		if move == 0xFFFF {
-			break
-		}
-		learnset = append(learnset, move)
-	}
-	return learnset
 }
 
 func getGenerationByDexNumber(dexNumber int) int {
@@ -368,11 +323,11 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	// 4 bytes of pointer boundary padding but only on builds with 216 size
 	pointerPadding := SPECIES_INFO_SIZE - 212
 	ptrsOffset := 144 + pointerPadding
-	s.levelUpLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.LevelUpLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
 	ptrsOffset += 4
-	s.teachableLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.TeachableLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
 	ptrsOffset += 4
-	s.eggMoveLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.EggMoveLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
 	ptrsOffset += 4
 	s.evolutionsPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
 	ptrsOffset += 4

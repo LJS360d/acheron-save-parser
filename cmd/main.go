@@ -81,6 +81,12 @@ func main() {
 		})
 	}
 
+	if slices.Contains(selectedOutputs, "learnsets") {
+		buildTask(&wg, "Learnsets data", func() error {
+			return SaveLearnsetsData(gbaBytes, "build/"+JSON_BUILDS_PREFIX+"learnsets.json", gba.Species[1:])
+		})
+	}
+
 	if slices.Contains(selectedOutputs, "sprites") {
 		buildTask(&wg, "Pokemon sprites", func() error {
 			return SaveSpeciesSprites(gbaBytes, gba.Species[1:])

@@ -219,15 +219,6 @@ func SaveSpeciesData(filepath string, s []*gba.SpeciesData) error {
 				"flags":       jsonconvert.MarshalSlice(getSpeciesFlags(mon)),
 				"itemCommon":  mon.ItemCommon,
 				"itemRare":    mon.ItemRare,
-				"levelUpLearnset": jsonconvert.MarshalSlice(
-					utils.MapSlice(mon.LevelUpLearnset, func(move *gba.LevelUpMove, i int) JSON {
-						return JSON{
-							"move":  move.Move,
-							"level": move.Level,
-						}
-					})),
-				"teachableLearnset": jsonconvert.MarshalSlice(mon.TeachableLearnset),
-				"eggMoveLearnset":   jsonconvert.MarshalSlice(mon.EggMoveLearnset),
 			}
 		}))
 	err = writer.Flush()
@@ -305,6 +296,37 @@ func SaveItemsData(filepath string, items []*gba.ItemData) error {
 				"battleUsage":     item.BattleUsage,
 				"importance":      item.Importance,
 				"type":            item.Type,
+			}
+		}))
+	err = writer.Flush()
+	if err != nil {
+		return fmt.Errorf("ERROR WRITING TO FILE: %w", err)
+	}
+	return nil
+}
+
+func SaveLearnsetsData(data []byte, filepath string, s []*gba.SpeciesData) error {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return fmt.Errorf("ERROR CREATING FILE: %w", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	json.NewEncoder(writer).Encode(utils.MapSlice(s,
+		func(mon *gba.SpeciesData, i int) JSON {
+			levelUpLearnset := parseLevelUpLearnset(data, mon.LevelUpLearnsetPtr)
+			return JSON{
+				"species": i,
+				"levelUpLearnset": jsonconvert.MarshalSlice(
+					utils.MapSlice(levelUpLearnset, func(move *LevelUpMove, i int) JSON {
+						return JSON{
+							"move":  move.Move,
+							"level": move.Level,
+						}
+					})),
+				"teachableLearnset": jsonconvert.MarshalSlice(parseLearnset(data, mon.TeachableLearnsetPtr)),
+				"eggMoveLearnset":   jsonconvert.MarshalSlice(parseLearnset(data, mon.EggMoveLearnsetPtr)),
 			}
 		}))
 	err = writer.Flush()
@@ -554,4 +576,43 @@ func buildTree(current uint16, tree *EvolutionTree, paths []EvolutionPath) {
 			}
 		}
 	}
+}
+
+type LevelUpMove struct {
+	Move  uint16
+	Level uint16
+}
+
+func parseLevelUpLearnset(data []byte, offset uint32) []*LevelUpMove {
+	learnset := make([]*LevelUpMove, 0)
+	if offset == gba.BAD_POINTER || offset >= uint32(len(data)) {
+		return learnset
+	}
+	const LEVEL_UP_MOVE_SIZE = 4
+	for i := offset; i+LEVEL_UP_MOVE_SIZE < uint32(len(data)); i += LEVEL_UP_MOVE_SIZE {
+		move := &LevelUpMove{
+			Move:  binary.LittleEndian.Uint16(data[i:]),
+			Level: binary.LittleEndian.Uint16(data[i+2:]),
+		}
+		if move.Move == 0xFFFF && move.Level == 0 {
+			break
+		}
+		learnset = append(learnset, move)
+	}
+	return learnset
+}
+
+func parseLearnset(data []byte, offset uint32) []uint16 {
+	learnset := make([]uint16, 0)
+	if offset == gba.BAD_POINTER || offset >= uint32(len(data)) {
+		return learnset
+	}
+	for i := offset; i+2 < uint32(len(data)); i += 2 {
+		move := binary.LittleEndian.Uint16(data[i+2:])
+		if move == 0xFFFF {
+			break
+		}
+		learnset = append(learnset, move)
+	}
+	return learnset
 }
