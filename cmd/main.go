@@ -63,6 +63,12 @@ func main() {
 		})
 	}
 
+	if slices.Contains(selectedOutputs, "items") {
+		buildTask(&wg, "Items data", func() error {
+			return SaveItemsData("build/"+JSON_BUILDS_PREFIX+"items.json", gba.Items[1:])
+		})
+	}
+
 	if slices.Contains(selectedOutputs, "moves") {
 		buildTask(&wg, "Moves data", func() error {
 			return SaveMovesData("build/"+JSON_BUILDS_PREFIX+"moves.json", gba.Moves[1:])

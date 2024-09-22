@@ -40,7 +40,8 @@
       "dependsOn": [
         "Generate Pokemon Docs data",
         "Generate Evolutions Docs data",
-        "Generate Moves Docs data"
+        "Generate Moves Docs data",
+        "Generate Items Docs data"
       ],
       "group": {
         "kind": "none",
@@ -74,6 +75,24 @@
         "-old='./build/rhh_evolutions.json'",
         "-id='family'",
         "-o='./build/evolutions.json,./../docs/src/data/evolutions.json'",
+        "-s",
+        "-d"
+      ],
+      "group": {
+        "kind": "none",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Items Docs data",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/scripts/build_compare.mjs",
+        "-new='./build/our_items.json'",
+        "-old='./build/rhh_items.json'",
+        "-id='id'",
+        "-o='./build/items.json,./../docs/src/data/items.json'",
         "-s",
         "-d"
       ],

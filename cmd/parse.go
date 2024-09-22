@@ -273,6 +273,38 @@ func SaveMovesData(filepath string, m []*gba.MoveData) error {
 	return nil
 }
 
+func SaveItemsData(filepath string, items []*gba.ItemData) error {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return fmt.Errorf("ERROR CREATING FILE: %w", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	json.NewEncoder(writer).Encode(utils.MapSlice(items,
+		func(item *gba.ItemData, i int) JSON {
+			return JSON{
+				"id":              i,
+				"name":            item.Name,
+				"description":     item.Description,
+				"category":        item.Pocket,
+				"price":           item.Price,
+				"secondaryId":     item.SecondaryId,
+				"flingPower":      item.FlingPower,
+				"holdEffectParam": item.HoldEffectParam,
+				"holdEffect":      item.HoldEffect,
+				"battleUsage":     item.BattleUsage,
+				"importance":      item.Importance,
+				"type":            item.Type,
+			}
+		}))
+	err = writer.Flush()
+	if err != nil {
+		return fmt.Errorf("ERROR WRITING TO FILE: %w", err)
+	}
+	return nil
+}
+
 func getSpeciesFlags(mon *gba.SpeciesData) []string {
 	flags := []string{}
 
