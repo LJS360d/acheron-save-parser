@@ -207,9 +207,9 @@ func SaveSpeciesData(filepath string, s []*gba.SpeciesData) error {
 					mon.EvYieldHP,
 					mon.EvYieldAttack,
 					mon.EvYieldDefense,
-					mon.EvYieldSpeed,
 					mon.EvYieldSpAttack,
 					mon.EvYieldSpDefense,
+					mon.EvYieldSpeed,
 				}),
 				"expYield":    mon.ExpYield,
 				"genderRatio": mon.GenderRatio,
@@ -219,6 +219,15 @@ func SaveSpeciesData(filepath string, s []*gba.SpeciesData) error {
 				"flags":       jsonconvert.MarshalSlice(getSpeciesFlags(mon)),
 				"itemCommon":  mon.ItemCommon,
 				"itemRare":    mon.ItemRare,
+				"levelUpLearnset": jsonconvert.MarshalSlice(
+					utils.MapSlice(mon.LevelUpLearnset, func(move *gba.LevelUpMove, i int) JSON {
+						return JSON{
+							"move":  move.Move,
+							"level": move.Level,
+						}
+					})),
+				"teachableLearnset": jsonconvert.MarshalSlice(mon.TeachableLearnset),
+				"eggMoveLearnset":   jsonconvert.MarshalSlice(mon.EggMoveLearnset),
 			}
 		}))
 	err = writer.Flush()
