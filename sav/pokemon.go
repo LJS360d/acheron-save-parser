@@ -223,7 +223,7 @@ func (p *Pokemon) SDExportFormat() string {
 
 	// IVs
 	sb.WriteString(fmt.Sprintf("IVs: %d HP / %d Atk / %d Def / %d SpA / %d SpD / %d Spe\n",
-		p.HpIv, p.AtkIv, p.DefIv, p.SpeIv, p.SpaIv, p.SpdIv))
+		p.HpIv, p.AtkIv, p.DefIv, p.SpaIv, p.SpdIv, p.SpeIv))
 
 	// Moves
 	sb.WriteString(fmt.Sprintf("- %s\n", strings.Join(p.Moves(), "\n- ")))

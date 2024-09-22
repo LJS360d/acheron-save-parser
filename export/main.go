@@ -16,7 +16,7 @@ func ParseSavBytes(this js.Value, args []js.Value) any {
 	js.CopyBytesToGo(data, fileBuffer)
 
 	savData := sav.ParseSavBytes(data)
-	return js.ValueOf(map[string]any{
+	return js.ValueOf(JSON{
 		"trainer": jsconvert.ToJsValue(&savData.Trainer),
 		// "pokedex":  save.Pokedex.ToJs(),
 		"team": TeamToJs(&savData.Team),
@@ -52,7 +52,7 @@ func PCToJs(pc *sav.PC) js.Value {
 	for i, value := range pc.Pokemon {
 		jsMons[i] = PokemonToJs(&value)
 	}
-	return js.ValueOf(map[string]any{
+	return js.ValueOf(JSON{
 		"currentBox": pc.CurrentBox,
 		"pokemon":    jsconvert.ToJsArray(jsMons),
 		"boxNames":   jsconvert.ToJsArray(pc.BoxNames),

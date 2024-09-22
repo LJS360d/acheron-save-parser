@@ -223,9 +223,9 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 	Items = i
 	m := ParseMovesInfoBytes(data, int(g.MovesPtr), int(g.MovesCount))
 	Moves = m
-	/* NaturesPtr := 0x0869797c - POINTER_OFFSET // (08/09/2024) on latest commit in rrh/upcoming 0x0869797c is the new offset
+	NaturesPtr := 0x08690498 - POINTER_OFFSET // (08/09/2024) on latest commit in rrh/upcoming 0x0869797c is the new offset
 	NaturesCount := 25
 	n := ParseNaturesInfoBytes(data, int(NaturesPtr), int(NaturesCount))
-	Natures = n */
+	Natures = n
 	return g
 }

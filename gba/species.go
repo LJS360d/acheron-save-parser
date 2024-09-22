@@ -114,7 +114,7 @@ type SpeciesData struct {
 const (
 	NUM_ABILITY_SLOTS   = 3
 	POKEMON_NAME_LENGTH = 12
-	SPECIES_INFO_SIZE   = 212 // (08/09/2024) on latest commit in rrh/upcoming 212 is the new size (because pointer boundaries)
+	SPECIES_INFO_SIZE   = 216 // (08/09/2024) on latest commit in rrh/upcoming 212 is the new size (because pointer boundaries)
 )
 
 func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
@@ -123,7 +123,7 @@ func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
 		s := &SpeciesData{}
 		s.new(data[offset+i*SPECIES_INFO_SIZE : offset+i*SPECIES_INFO_SIZE+SPECIES_INFO_SIZE])
 		species[i] = s
-		if s.descriptionPtr != BAD_POINTER {
+		if s.descriptionPtr != BAD_POINTER && s.descriptionPtr < uint32(len(data)) {
 			s.Description = utils.DecodePointerString(data, s.descriptionPtr)
 		}
 		s.Bst = int(s.BaseHP) + int(s.BaseAttack) + int(s.BaseDefense) + int(s.BaseSpeed) + int(s.BaseSpAttack) + int(s.BaseSpDefense)
