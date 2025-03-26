@@ -3,16 +3,30 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Go (Debug)",
+      "name": "Debug - Our",
       "type": "go",
       "request": "launch",
       "program": "${workspaceFolder}/cmd",
       "env": {},
       "args": [
         "-sav=test/sav/pokeemerald_2.sav",
-        "-gba=test/gba/pokeemerald.gba",
-        "-o=species,evolutions,moves,learnsets,items,sprites",
+        "-gba=test/gba/acheron-emerald.gba",
+        "-o=species,evolutions,moves,learnsets,items,encounters",
         "-jbp=our_"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug - Rhh",
+      "type": "go",
+      "request": "launch",
+      "program": "${workspaceFolder}/cmd",
+      "env": {},
+      "args": [
+        "-gba=test/gba/rhh1.11.8.gba",
+        "-o=species,evolutions,moves,learnsets,items,encounters",
+        "-jbp=rhh_"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"

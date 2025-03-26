@@ -4,7 +4,6 @@ import (
 	"acheron-save-parser/gba"
 	"acheron-save-parser/sav"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"slices"
@@ -28,9 +27,9 @@ func main() {
 	flag.StringVar(jsonBuildsPrefix, "jsonBuildsPrefix", "", "Prefix to use for JSON builds (generated files under build will have this prefix)")
 
 	flag.Parse()
-	fmt.Printf("Save file path: %s\n", *savFile)
-	fmt.Printf("GBA file path: %s\n", *gbaFile)
-	fmt.Printf("Outputs: %s\n", *outputs)
+	log.Printf("Save file path: %s\n", *savFile)
+	log.Printf("GBA file path: %s\n", *gbaFile)
+	log.Printf("Outputs: %s\n", *outputs)
 
 	if *gbaFile == "" {
 		log.Fatal("-g/-gba flag is required.")
@@ -44,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	g := gba.ParseGbaBytes(gbaBytes)
+	g := gba.LoadGbaData(gbaBytes)
 	if *savFile != "" {
 		savBytes, err := os.ReadFile(*savFile)
 		if err != nil {
@@ -98,6 +97,12 @@ func main() {
 
 		buildTask(&wg, "Item icons", func() error {
 			return SaveItemsIcons(gbaBytes, gba.Items[1:])
+		})
+	}
+
+	if slices.Contains(selectedOutputs, "encounters") {
+		buildTask(&wg, "Wild encounters", func() error {
+			return SaveWildEncountersData("build/"+JSON_BUILDS_PREFIX+"wild_encounters.json", gba.WildEncounters)
 		})
 	}
 

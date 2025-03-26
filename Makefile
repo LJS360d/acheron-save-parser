@@ -1,11 +1,9 @@
 ifeq ($(OS),Windows_NT)
 	EXE := .exe
-	DEL := del /f
 	SET_ENV := set
 	SEP := &
 else
 	EXE :=
-	DEL := rm -f
 	SET_ENV :=
 	SEP := ;
 endif
@@ -19,13 +17,15 @@ WASM_BINARY_NAME 	= save-parser.wasm
 WASM_BUILDPATH 		= ../docs/public/$(WASM_BINARY_NAME)
 WASM_MAIN_PACKAGE 	= ./export
 
-all: build-wasm
+WASM_BUILDFLAGS = $(SET_ENV) GOOS=js$(SEP) $(SET_ENV) GOARCH=wasm$(SEP)
+
+all: wasm
 
 build:
 	go build -o $(BUILDPATH) $(MAIN_PACKAGE)
 
-build-wasm:
-	$(SET_ENV) GOOS=js$(SEP) $(SET_ENV) GOARCH=wasm$(SEP) go build -o $(WASM_BUILDPATH) $(WASM_MAIN_PACKAGE)
+wasm:
+	$(WASM_BUILDFLAGS) go build -o $(WASM_BUILDPATH) $(WASM_MAIN_PACKAGE)
 
 test:
 	go test -coverprofile=coverage.out ./...
@@ -36,10 +36,9 @@ lint:
 
 clean:
 	go clean
-	$(DEL) $(BUILDPATH)
-	$(DEL) $(WASM_BUILDPATH)
+	rmdir -d -f $(BUILD_DIR)
 
 run: build
 	./$(BUILDPATH)
 
-.PHONY: all build build-wasm test lint clean run
+.PHONY: all build wasm test lint clean run

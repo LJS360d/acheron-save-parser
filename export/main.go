@@ -4,7 +4,7 @@ import (
 	jsconvert "acheron-save-parser/export/js"
 	"acheron-save-parser/gba"
 	"acheron-save-parser/sav"
-	"fmt"
+	"log"
 	"syscall/js"
 )
 
@@ -30,8 +30,8 @@ func ParseGbaBytes(this js.Value, args []js.Value) any {
 	data := make([]byte, fileBuffer.Get("length").Int())
 	js.CopyBytesToGo(data, fileBuffer)
 
-	gbaData := gba.ParseGbaBytes(data)
-	fmt.Printf("Loaded GBA Rom data\nSpecies: %d\nItems: %d\nMoves: %d\nAbilities: %d\nNatures: %d\n",
+	gbaData := gba.LoadGbaData(data)
+	log.Printf("Loaded GBA Rom data\nSpecies: %d\nItems: %d\nMoves: %d\nAbilities: %d\nNatures: %d\n",
 		len(gba.Species),
 		len(gba.Items),
 		len(gba.Moves),

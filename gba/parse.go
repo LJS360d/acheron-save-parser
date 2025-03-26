@@ -1,27 +1,17 @@
 package gba
 
 import (
+	"acheron-save-parser/utils"
 	"encoding/binary"
+	"fmt"
 	"log"
-	"runtime"
-	"strconv"
 )
 
-const (
-	wasm_build     = runtime.GOARCH == "wasm" && runtime.GOOS == "js"
-	POINTER_OFFSET = 0x08000000
-	BAD_POINTER    = 0x0f8000000
-)
-
-var (
-	Abilities []*AbilityData
-	Species   []*SpeciesData
-	Items     []*ItemData
-	Natures   []*NatureData
-	Moves     []*MoveData
-)
-
-type GbaData struct {
+// header originally defined in 3 parts:
+// src/rom_header.s - first 256 bytes
+// src/rom_header_gf.c - GameFreak .text.consts section - 256 bytes
+// src/rom_header_rhh.c - Rhh .text.consts section - 256 bytes? not sure, the actual struct is only 23 bytes (24 for alignment)
+type GbaHeader struct {
 	// --- GF Header ---
 	RomEntryPoint uint32
 	NintendoLogo  []byte // 156 bytes
@@ -117,8 +107,9 @@ type GbaData struct {
 	ItemNameLength uint8  // 20
 }
 
-func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
-	g := &GbaData{
+func LoadGbaData(data []byte /* 33'554'432 Bytes */) *GbaHeader {
+	Data = data
+	Header = &GbaHeader{
 		// --- GF Header ---
 		RomEntryPoint: binary.LittleEndian.Uint32(data[0x00:0x04]),
 		NintendoLogo:  data[0x04:0xA0],
@@ -141,7 +132,7 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		// --- GF .text.consts ---
 		Version:  binary.LittleEndian.Uint32(data[0x100:0x104]),
 		Language: binary.LittleEndian.Uint32(data[0x104:0x108]),
-		GameName: string(data[0x108:0x11F]),
+		GameName: utils.DecodeGFString(data[0x108:0x11F]),
 		/* MonFrontPicsPtr:      binary.LittleEndian.Uint64(data[0x11F:0x127]),
 		MonBackPicsPtr:       binary.LittleEndian.Uint64(data[0x127:0x133]),
 		MonNormalPalettesPtr: binary.LittleEndian.Uint64(data[0x133:0x13B]),
@@ -219,23 +210,25 @@ func ParseGbaBytes(data []byte /* 33'554'432 Bytes */) *GbaData {
 		ItemsCount:     binary.LittleEndian.Uint16(data[0x218:0x21A]),
 		ItemNameLength: data[0x21A],
 	}
-	tagStatus := map[bool]string{true: "tagged", false: "untagged"}[g.TaggedVersion]
-	version := strconv.Itoa(int(g.MajorVersion)) + "." + strconv.Itoa(int(g.MinorVersion)) + "." + strconv.Itoa(int(g.PatchVersion))
+	tagStatus := map[bool]string{true: "tagged", false: "untagged"}[Header.TaggedVersion]
+	version := fmt.Sprintf("%d.%d.%d", Header.MajorVersion, Header.MinorVersion, Header.PatchVersion)
+	log.Println("Loaded header")
 	log.Printf("Detected Emerald Expansion version: %s (%s)\n", version, tagStatus)
-
-	a := ParseAbilitiesBytes(data, int(g.AbilitiesPtr), int(g.AbilitiesCount))
-	Abilities = a
-	s := ParseSpeciesInfoBytes(data, int(g.SpeciesInfoPtr), int(g.SpeciesCount))
-	Species = s
-	i := ParseItemsInfoBytes(data, int(g.ItemsPtr), int(g.ItemsCount))
-	Items = i
-	m := ParseMovesInfoBytes(data, int(g.MovesPtr), int(g.MovesCount))
-	Moves = m
+	Config = GetGbaConfig(version)
+	log.Printf("Using config: %s\n", Config.Match)
+	Abilities = ParseAbilitiesBytes(int(Header.AbilitiesPtr), int(Header.AbilitiesCount))
+	log.Println("Loaded abilities")
+	Species = ParseSpeciesInfoBytes(int(Header.SpeciesInfoPtr), int(Header.SpeciesCount))
+	log.Println("Loaded species")
+	Items = ParseItemsInfoBytes(int(Header.ItemsPtr), int(Header.ItemsCount))
+	log.Println("Loaded items")
+	Moves = ParseMovesInfoBytes(int(Header.MovesPtr), int(Header.MovesCount))
+	log.Println("Loaded moves")
+	WildEncounters = ParseWildEncounters(Config.WildEncountersOffset)
+	log.Println("Loaded wild encounters")
 	if wasm_build {
-		NaturesPtr := 0x08690498 - POINTER_OFFSET // (08/09/2024) on latest commit in rrh/upcoming 0x0869797c is the new offset
-		NaturesCount := 25
-		n := ParseNaturesInfoBytes(data, int(NaturesPtr), int(NaturesCount))
-		Natures = n
+		Natures = ParseNaturesInfoBytes(Config.NaturesOffset, Config.NaturesCount)
+		log.Println("Loaded natures")
 	}
-	return g
+	return Header
 }

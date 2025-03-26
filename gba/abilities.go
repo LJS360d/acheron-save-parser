@@ -6,9 +6,9 @@ import (
 )
 
 type AbilityData struct {
-	Name              string // 20 bytes
+	Name              string `json:"name"` // 20 bytes
 	descriptionPtr    uint32
-	Description       string
+	Description       string `json:"description"`
 	aiRating          int8
 	cantBeCopied      bool
 	cantBeSwapped     bool
@@ -19,39 +19,23 @@ type AbilityData struct {
 	failsOnImposter   bool
 }
 
-const (
-	ABILITY_INFO_SIZE_LENGTH12 = 25
-	ABILITY_INFO_SIZE_LENGTH16 = 28
-)
-
-var (
-	AbilityNameLength12 = false
-)
-
-func ParseAbilitiesBytes(data []byte, offset int, count int) []*AbilityData {
+func ParseAbilitiesBytes(offset int, count int) []*AbilityData {
 	abilities := make([]*AbilityData, count)
-	var abilityInfoSize int
-	if AbilityNameLength12 {
-		abilityInfoSize = ABILITY_INFO_SIZE_LENGTH12
-		for i := 0; i < count; i++ {
-			a := &AbilityData{}
-			a.new_name12(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
-			abilities[i] = a
-			a.Description = utils.DecodePointerString(data, a.descriptionPtr)
+	abilityInfoSize := Config.AbilityInfoSize
+	for i := 0; i < count; i++ {
+		a := &AbilityData{}
+		if abilityInfoSize == 25 {
+			a.loadFromDataSection25(Data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
+		} else {
+			a.loadFromDataSection(Data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
 		}
-	} else {
-		abilityInfoSize = ABILITY_INFO_SIZE_LENGTH16
-		for i := 0; i < count; i++ {
-			a := &AbilityData{}
-			a.new_name16(data[offset+i*abilityInfoSize : offset+i*abilityInfoSize+abilityInfoSize])
-			abilities[i] = a
-			a.Description = utils.DecodePointerString(data, a.descriptionPtr)
-		}
+		abilities[i] = a
+		a.Description = utils.DecodePointerString(Data, a.descriptionPtr)
 	}
 	return abilities
 }
 
-func (a *AbilityData) new_name12(section []byte /* 22 + 3 bytes */) {
+func (a *AbilityData) loadFromDataSection25(section []byte /* 22 + 3 bytes */) {
 	a.Name = utils.DecodeGFString(section[0:16])
 	a.descriptionPtr = binary.LittleEndian.Uint32(section[16:20]) - POINTER_OFFSET
 	a.aiRating = int8(section[20])
@@ -65,7 +49,7 @@ func (a *AbilityData) new_name12(section []byte /* 22 + 3 bytes */) {
 	// 3 bytes of padding for the pointer boundary
 }
 
-func (a *AbilityData) new_name16(section []byte /* 26 + 2 bytes */) {
+func (a *AbilityData) loadFromDataSection(section []byte /* 26 + 2 bytes */) {
 	a.Name = utils.DecodeGFString(section[0:20])
 	a.descriptionPtr = binary.LittleEndian.Uint32(section[20:24]) - POINTER_OFFSET
 	a.aiRating = int8(section[24])

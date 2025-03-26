@@ -19,23 +19,19 @@ type NatureData struct {
 	NatureGirlMessage       string
 }
 
-const (
-	NATURE_INFO_SIZE = 20
-)
-
-func ParseNaturesInfoBytes(data []byte, offset int, count int) []*NatureData {
+func ParseNaturesInfoBytes(offset int, count int) []*NatureData {
 	natures := make([]*NatureData, count)
 	for i := 0; i < count; i++ {
 		n := &NatureData{}
-		n.new(data[offset+i*NATURE_INFO_SIZE : offset+i*NATURE_INFO_SIZE+NATURE_INFO_SIZE])
+		n.loadFromDataSection(Data[offset+i*Config.NatureInfoSize : offset+i*Config.NatureInfoSize+Config.NatureInfoSize])
 		natures[i] = n
-		n.Name = utils.DecodePointerString(data, n.namePtr)
-		n.NatureGirlMessage = utils.DecodePointerString(data, n.natureGirlMessagePtr)
+		n.Name = utils.DecodePointerString(Data, n.namePtr)
+		n.NatureGirlMessage = utils.DecodePointerString(Data, n.natureGirlMessagePtr)
 	}
 	return natures
 }
 
-func (n *NatureData) new(section []byte /* 20 bytes */) {
+func (n *NatureData) loadFromDataSection(section []byte /* 20 bytes */) {
 	n.namePtr = binary.LittleEndian.Uint32(section[0:4]) - POINTER_OFFSET
 	//
 	n.StatUp = section[4]

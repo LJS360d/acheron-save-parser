@@ -5,6 +5,10 @@ import (
 	"encoding/binary"
 )
 
+const (
+	NUM_ABILITY_SLOTS = 3
+)
+
 type SpeciesData struct {
 	BaseHP           uint8
 	BaseAttack       uint8
@@ -93,52 +97,51 @@ type SpeciesData struct {
 	DexForceRequired  bool
 	TMIlliterate      bool
 	IsFrontierBanned  bool
-	// Padding4                 14 bits of padding
-	LevelUpLearnsetPtr       uint32
-	TeachableLearnsetPtr     uint32
-	EggMoveLearnsetPtr       uint32
-	evolutionsPtr            uint32
-	Evolutions               []*Evolution
-	formSpeciesIdTablePtr    uint32
-	FormSpeciesIdTable       []uint16
-	formChangeTablePtr       uint32
-	FormChangeTable          []*FormChange
-	OverworldData            [32]uint8 // TODO
-	overworldPalettePtr      uint32
-	overworldShinyPalettePtr uint32
+	// Padding4                 14/11 bits of padding
+	// shadow settings (1.11.x+)
+	EnemyShadowXOffset  int8
+	EnemyShadowYOffset  int8
+	EnemyShadowSize     uint8 // 3 bits
+	SuppressEnemyShadow bool
+	// padding 12 bits
+	LevelUpLearnsetPtr             uint32
+	TeachableLearnsetPtr           uint32
+	EggMoveLearnsetPtr             uint32
+	evolutionsPtr                  uint32
+	Evolutions                     []*Evolution
+	formSpeciesIdTablePtr          uint32
+	FormSpeciesIdTable             []uint16
+	formChangeTablePtr             uint32
+	FormChangeTable                []*FormChange
+	OverworldData                  [32]uint8 // TODO
+	OverworldDataFemale            [32]uint8 // TODO
+	overworldPalettePtr            uint32
+	overworldShinyPalettePtr       uint32
+	overworldPaletteFemalePtr      uint32
+	overworldShinyPaletteFemalePtr uint32
 }
 
-const (
-	NUM_ABILITY_SLOTS   = 3
-	POKEMON_NAME_LENGTH = 12
-	SPECIES_INFO_SIZE   = 216 // (08/09/2024) on latest commit in rrh/upcoming 212 is the new size (because pointer boundaries)
-)
-
-func ParseSpeciesInfoBytes(data []byte, offset int, count int) []*SpeciesData {
+func ParseSpeciesInfoBytes(offset int, count int) []*SpeciesData {
 	species := make([]*SpeciesData, count)
 	for i := 0; i < count; i++ {
 		s := &SpeciesData{}
-		s.new(data[offset+i*SPECIES_INFO_SIZE : offset+i*SPECIES_INFO_SIZE+SPECIES_INFO_SIZE])
-		species[i] = s
-		if s.descriptionPtr != BAD_POINTER && s.descriptionPtr < uint32(len(data)) {
-			s.Description = utils.DecodePointerString(data, s.descriptionPtr)
+		if Config.SpeciesInfoSize <= 216 {
+			s.loadFromDataSection(Data[offset+i*Config.SpeciesInfoSize : offset+i*Config.SpeciesInfoSize+Config.SpeciesInfoSize])
+		} else {
+			s.loadFromDataSection260(Data[offset+i*Config.SpeciesInfoSize : offset+i*Config.SpeciesInfoSize+Config.SpeciesInfoSize])
 		}
-		s.Bst = int(s.BaseHP) + int(s.BaseAttack) + int(s.BaseDefense) + int(s.BaseSpeed) + int(s.BaseSpAttack) + int(s.BaseSpDefense)
-		s.Generation = getGenerationByDexNumber(int(s.NatDexNum))
-		s.FormSpeciesIdTable = parseFormSpeciesIdTable(data, s.formSpeciesIdTablePtr)
-		s.FormChangeTable = parseFormChangeTable(data, s.formChangeTablePtr)
-		s.Evolutions = parseEvolutions(data, s.evolutionsPtr)
+		species[i] = s
 	}
 	return species
 }
 
-func parseFormSpeciesIdTable(data []byte, offset uint32) []uint16 {
+func parseFormSpeciesIdTable(Data []byte, offset uint32) []uint16 {
 	table := make([]uint16, 0)
-	if offset == BAD_POINTER || offset >= uint32(len(data)) {
+	if offset == NULL_POINTER || offset >= uint32(len(Data)) {
 		return table
 	}
-	for i := offset; i+1 < uint32(len(data)); i += 2 {
-		value := binary.LittleEndian.Uint16(data[i:])
+	for i := offset; i+1 < uint32(len(Data)); i += 2 {
+		value := binary.LittleEndian.Uint16(Data[i:])
 		if value == 0xFFFF {
 			break
 		}
@@ -155,18 +158,18 @@ type FormChange struct {
 	Param3        uint16
 }
 
-func parseFormChangeTable(data []byte, offset uint32) []*FormChange {
+func parseFormChangeTable(Data []byte, offset uint32) []*FormChange {
 	table := make([]*FormChange, 0)
-	if offset == BAD_POINTER || offset >= uint32(len(data)) {
+	if offset == NULL_POINTER || offset >= uint32(len(Data)) {
 		return table
 	}
-	for i := offset; i+12 < uint32(len(data)); i += 12 {
+	for i := offset; i+12 < uint32(len(Data)); i += 12 {
 		change := &FormChange{
-			Method:        binary.LittleEndian.Uint16(data[i:]),
-			TargetSpecies: binary.LittleEndian.Uint16(data[i+2:]),
-			Param1:        binary.LittleEndian.Uint16(data[i+4:]),
-			Param2:        binary.LittleEndian.Uint16(data[i+6:]),
-			Param3:        binary.LittleEndian.Uint16(data[i+8:]),
+			Method:        binary.LittleEndian.Uint16(Data[i:]),
+			TargetSpecies: binary.LittleEndian.Uint16(Data[i+2:]),
+			Param1:        binary.LittleEndian.Uint16(Data[i+4:]),
+			Param2:        binary.LittleEndian.Uint16(Data[i+6:]),
+			Param3:        binary.LittleEndian.Uint16(Data[i+8:]),
 		}
 		if change.Method == 0x0000 {
 			break
@@ -182,20 +185,20 @@ type Evolution struct {
 	TargetSpecies uint16
 }
 
-func parseEvolutions(data []byte, offset uint32) []*Evolution {
+func parseEvolutions(Data []byte, offset uint32) []*Evolution {
 	evolutions := make([]*Evolution, 0)
-	if offset == BAD_POINTER || offset >= uint32(len(data)) {
+	if offset == NULL_POINTER || offset >= uint32(len(Data)) {
 		return evolutions
 	}
 	const EVO_SIZE = 8
-	for i := offset; i+EVO_SIZE < uint32(len(data)); i += EVO_SIZE {
+	for i := offset; i+EVO_SIZE < uint32(len(Data)); i += EVO_SIZE {
 		evolution := &Evolution{
-			Method:        binary.LittleEndian.Uint16(data[i:]),
-			Param:         binary.LittleEndian.Uint16(data[i+2:]),
-			TargetSpecies: binary.LittleEndian.Uint16(data[i+4:]),
+			Method:        binary.LittleEndian.Uint16(Data[i:]),
+			Param:         binary.LittleEndian.Uint16(Data[i+2:]),
+			TargetSpecies: binary.LittleEndian.Uint16(Data[i+4:]),
 		}
 		evolutions = append(evolutions, evolution)
-		if binary.LittleEndian.Uint16(data[i+EVO_SIZE:]) == 0xFFFF {
+		if binary.LittleEndian.Uint16(Data[i+EVO_SIZE:]) == 0xFFFF {
 			break
 		}
 	}
@@ -224,7 +227,7 @@ func getGenerationByDexNumber(dexNumber int) int {
 	return 0
 }
 
-func (s *SpeciesData) new(section []byte /* 216 bytes */) {
+func (s *SpeciesData) loadFromDataSection(section []byte /* 216 bytes */) {
 	s.BaseHP = section[0x0]
 	s.BaseAttack = section[0x1]
 	s.BaseDefense = section[0x2]
@@ -261,6 +264,8 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.SpeciesName = utils.DecodeGFString(section[0x2C:0x3A])
 	s.CryID = binary.LittleEndian.Uint16(section[0x3A:0x3C])
 	s.NatDexNum = binary.LittleEndian.Uint16(section[0x3C:0x3E])
+	// added util
+	s.Generation = getGenerationByDexNumber(int(s.NatDexNum))
 	s.Height = binary.LittleEndian.Uint16(section[0x3E:0x40])
 	s.Weight = binary.LittleEndian.Uint16(section[0x40:0x42])
 	s.PokemonScale = binary.LittleEndian.Uint16(section[0x42:0x44])
@@ -321,7 +326,7 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	s.IsFrontierBanned = section[0x8E]&0x4 == 4
 	// Padding4 14 bits of padding, it also takes the first bit of the next byte
 	// 4 bytes of pointer boundary padding but only on builds with 216 size
-	pointerPadding := SPECIES_INFO_SIZE - 212
+	pointerPadding := Config.SpeciesInfoSize - 212
 	ptrsOffset := 144 + pointerPadding
 	s.LevelUpLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
 	ptrsOffset += 4
@@ -335,8 +340,157 @@ func (s *SpeciesData) new(section []byte /* 216 bytes */) {
 	ptrsOffset += 4
 	s.formChangeTablePtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
 	ptrsOffset += 4
-	// TODO
-	// s.OverworldData = section[0xAC:0xB0]
+
+	for i, v := range section[0xAC:0xB0] {
+		s.OverworldData[i] = uint8(v)
+	}
 	s.overworldPalettePtr = binary.LittleEndian.Uint32(section[0xB0:0xB4]) - POINTER_OFFSET
 	s.overworldShinyPalettePtr = binary.LittleEndian.Uint32(section[0xB4:0xB8]) - POINTER_OFFSET
+}
+
+func (s *SpeciesData) loadFromDataSection260(section []byte /* 260 bytes */) {
+	s.BaseHP = section[0]
+	s.BaseAttack = section[1]
+	s.BaseDefense = section[2]
+	s.BaseSpeed = section[3]
+	s.BaseSpAttack = section[4]
+	s.BaseSpDefense = section[5]
+	// added util
+	s.Bst = int(s.BaseHP) + int(s.BaseAttack) + int(s.BaseDefense) + int(s.BaseSpeed) + int(s.BaseSpAttack) + int(s.BaseSpDefense)
+	s.Types[0] = section[6]
+	s.Types[1] = section[7]
+	s.CatchRate = section[8]
+	s.ForceTeraType = section[9]
+	s.ExpYield = binary.LittleEndian.Uint16(section[10:12])
+	// first 2 bits
+	s.EvYieldHP = section[12] & 0b00000011
+	s.EvYieldAttack = section[12] & 0b00001100 >> 2
+	s.EvYieldDefense = section[12] & 0b00110000 >> 4
+	s.EvYieldSpeed = section[12] & 0b11000000 >> 6
+	// first 2 bits
+	s.EvYieldSpAttack = section[13] & 0b00000011
+	s.EvYieldSpDefense = section[13] & 0b00001100 >> 2
+	// Padding2 last 4 bits of 13th byte
+	s.ItemCommon = binary.LittleEndian.Uint16(section[14:16])
+	s.ItemRare = binary.LittleEndian.Uint16(section[16:18])
+	s.GenderRatio = section[18]
+	s.EggCycles = section[19]
+	s.Friendship = section[20]
+	s.GrowthRate = section[21]
+	s.EggGroups[0] = section[22]
+	s.EggGroups[1] = section[23]
+	s.Abilities[0] = binary.LittleEndian.Uint16(section[24:])
+	s.Abilities[1] = binary.LittleEndian.Uint16(section[26:])
+	s.Abilities[2] = binary.LittleEndian.Uint16(section[28:])
+	s.SafariZoneFleeRate = section[30]
+	s.CategoryName = utils.DecodeGFString(section[31:44]) // 13 chars max
+	// 13 chars max, technically build dependant
+	s.SpeciesName = utils.DecodeGFString(section[44 : 44+Config.PokemonNameLength])
+	var i = 45 + Config.PokemonNameLength
+	s.CryID = binary.LittleEndian.Uint16(section[i:])
+	s.NatDexNum = binary.LittleEndian.Uint16(section[i+2:])
+	// added util
+	s.Generation = getGenerationByDexNumber(int(s.NatDexNum))
+	s.Height = binary.LittleEndian.Uint16(section[i+4:])
+	s.Weight = binary.LittleEndian.Uint16(section[i+6:])
+	// 2 bytes of padding ??
+	s.PokemonScale = binary.LittleEndian.Uint16(section[i+10:])
+	s.PokemonOffset = binary.LittleEndian.Uint16(section[i+12:])
+	s.TrainerScale = binary.LittleEndian.Uint16(section[i+14:])
+	s.TrainerOffset = binary.LittleEndian.Uint16(section[i+16:])
+	s.descriptionPtr = binary.LittleEndian.Uint32(section[i+18:]) - POINTER_OFFSET
+	if s.descriptionPtr != NULL_POINTER && s.descriptionPtr < uint32(len(Data)) {
+		s.Description = utils.DecodePointerString(Data, s.descriptionPtr)
+	}
+
+	// first 7 bits, big endian
+	s.BodyColor = section[i+22] & 0x7F
+	// last bit
+	s.NoFlip = section[i+22]&0x80 == 1
+	s.FrontAnimDelay = section[i+23]
+	s.FrontAnimID = section[i+24]
+	s.BackAnimID = section[i+25]
+	s.frontAnimFramesPtr = binary.LittleEndian.Uint32(section[i+26:]) - POINTER_OFFSET
+	s.FrontPicPtr = binary.LittleEndian.Uint32(section[i+30:]) - POINTER_OFFSET
+	s.backPicPtr = binary.LittleEndian.Uint32(section[i+34:]) - POINTER_OFFSET
+	s.PalettePtr = binary.LittleEndian.Uint32(section[i+38:]) - POINTER_OFFSET
+	s.ShinyPalettePtr = binary.LittleEndian.Uint32(section[i+42:]) - POINTER_OFFSET
+	s.IconSpritePtr = binary.LittleEndian.Uint32(section[i+46:]) - POINTER_OFFSET
+	// female graphics
+	s.frontPicFemalePtr = binary.LittleEndian.Uint32(section[i+50:]) - POINTER_OFFSET
+	s.backPicFemalePtr = binary.LittleEndian.Uint32(section[i+54:]) - POINTER_OFFSET
+	s.paletteFemalePtr = binary.LittleEndian.Uint32(section[i+58:]) - POINTER_OFFSET
+	s.shinyPaletteFemalePtr = binary.LittleEndian.Uint32(section[i+62:]) - POINTER_OFFSET
+	s.IconSpriteFemalePtr = binary.LittleEndian.Uint32(section[i+66:]) - POINTER_OFFSET
+	s.footprintPtr = binary.LittleEndian.Uint32(section[i+68:]) - POINTER_OFFSET
+	// 2 bytes of padding
+	s.FrontPicSize = section[i+74]
+	s.FrontPicYOffset = section[i+75]
+	s.BackPicSize = section[i+76]
+	s.BackPicYOffset = section[i+77]
+	// female graphics
+	s.FrontPicSizeFemale = section[i+78]
+	s.BackPicSizeFemale = section[i+79]
+	// first 3 bits
+	s.IconPalIndex = section[i+80] & 0x7
+	// next 3 bits
+	s.IconPalIndexFemale = section[i+80] & 0x38
+	// last 2 bits are padding
+	s.EnemyMonElevation = section[i+81]
+	s.IsLegendary = section[i+82]&0x1 == 1
+	s.IsMythical = section[i+82]&0x2 == 2
+	s.IsUltraBeast = section[i+82]&0x4 == 4
+	s.IsParadox = section[i+82]&0x8 == 8
+	s.IsTotem = section[i+82]&0x10 == 0x10
+	s.IsMegaEvolution = section[i+82]&0x20 == 0x20
+	s.IsPrimalReversion = section[i+82]&0x40 == 0x40
+	s.IsUltraBurst = section[i+82]&0x80 == 0x80
+	s.IsGigantamax = section[i+83]&0x1 == 1
+	s.IsTeraForm = section[i+83]&0x2 == 2
+	s.IsAlolanForm = section[i+83]&0x4 == 4
+	s.IsGalarianForm = section[i+83]&0x8 == 8
+	s.IsHisuianForm = section[i+83]&0x10 == 0x10
+	s.IsPaldeanForm = section[i+83]&0x20 == 0x20
+	s.CannotBeTraded = section[i+83]&0x40 == 0x40
+	s.AllPerfectIVs = section[i+83]&0x80 == 0x80
+	s.DexForceRequired = section[i+84]&0x1 == 1
+	s.TMIlliterate = section[i+84]&0x2 == 2
+	s.IsFrontierBanned = section[i+84]&0x4 == 4
+	// Padding4 11 bits of padding
+	s.EnemyShadowXOffset = int8(section[i+86])
+	s.EnemyShadowYOffset = int8(section[i+87])
+	// first 3 bits
+	s.EnemyShadowSize = section[i+88] & 0x7
+	// 4th bit
+	s.SuppressEnemyShadow = section[i+88]&0x8 == 0x8
+	// 12 bits of padding, so i+89 is unused
+	// 2 bytes of compiler added padding for pointer alignment
+
+	ptrsOffset := i + 90
+	s.LevelUpLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	ptrsOffset += 4
+	s.TeachableLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	ptrsOffset += 4
+	s.EggMoveLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	ptrsOffset += 4
+	s.evolutionsPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.Evolutions = parseEvolutions(Data, s.evolutionsPtr)
+	ptrsOffset += 4
+	s.formSpeciesIdTablePtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.FormSpeciesIdTable = parseFormSpeciesIdTable(Data, s.formSpeciesIdTablePtr)
+	ptrsOffset += 4
+	s.formChangeTablePtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.FormChangeTable = parseFormChangeTable(Data, s.formChangeTablePtr)
+	ptrsOffset += 4
+
+	for i, v := range section[180:212] {
+		s.OverworldData[i] = uint8(v)
+	}
+	for i, v := range section[212:244] {
+		s.OverworldDataFemale[i] = uint8(v)
+	}
+	s.overworldPalettePtr = binary.LittleEndian.Uint32(section[244:]) - POINTER_OFFSET
+	s.overworldShinyPalettePtr = binary.LittleEndian.Uint32(section[248:]) - POINTER_OFFSET
+	s.overworldPaletteFemalePtr = binary.LittleEndian.Uint32(section[252:]) - POINTER_OFFSET
+	s.overworldShinyPaletteFemalePtr = binary.LittleEndian.Uint32(section[256:]) - POINTER_OFFSET
 }

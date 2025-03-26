@@ -59,20 +59,21 @@ type MoveData struct {
 	CantUseTwice                      bool
 
 	// Ban flags
-	GravityBanned      bool
-	MirrorMoveBanned   bool
-	MeFirstBanned      bool
-	MimicBanned        bool
-	MetronomeBanned    bool
-	CopycatBanned      bool
-	AssistBanned       bool // Matches same moves as copycatBanned + semi-invulnerable moves and Mirror Coat.
-	SleepTalkBanned    bool
-	InstructBanned     bool
-	EncoreBanned       bool
-	ParentalBondBanned bool
-	SkyBattleBanned    bool
-	SketchBanned       bool
-	// padding // 5 bits // end of word
+	GravityBanned       bool
+	MirrorMoveBanned    bool
+	MeFirstBanned       bool
+	MimicBanned         bool
+	MetronomeBanned     bool
+	CopycatBanned       bool
+	AssistBanned        bool // Matches same moves as copycatBanned + semi-invulnerable moves and Mirror Coat.
+	SleepTalkBanned     bool
+	InstructBanned      bool
+	EncoreBanned        bool
+	ParentalBondBanned  bool
+	SkyBattleBanned     bool
+	SketchBanned        bool
+	ValidApprenticeMove bool // new in rhh 1.11.1
+	// padding // 3 bits // end of word
 
 	Argument uint32
 	// primary/secondary effects
@@ -86,27 +87,22 @@ type MoveData struct {
 	battleAnimScriptPtr   uint32
 }
 
-const (
-	MOVE_INFO_SIZE               = 52
-	MOVE_ADDITIONAL_EFFECTS_SIZE = 4
-)
-
-func ParseMovesInfoBytes(data []byte, offset int, count int) []*MoveData {
+func ParseMovesInfoBytes(offset int, count int) []*MoveData {
 	moves := make([]*MoveData, count)
 	for i := 0; i < count; i++ {
 		m := &MoveData{}
-		m.new(data[offset+i*MOVE_INFO_SIZE : offset+i*MOVE_INFO_SIZE+MOVE_INFO_SIZE])
+		m.loadFromDataSection(Data[offset+i*Config.MoveInfoSize : offset+i*Config.MoveInfoSize+Config.MoveInfoSize])
 		moves[i] = m
-		m.Name = utils.DecodePointerString(data, m.namePtr)
-		m.Description = utils.DecodePointerString(data, m.descriptionPtr)
-		if m.additionalEffectsPtr != BAD_POINTER {
-			m.AdditionalEffects = ParseMoveAdditionalEffects(data, m.additionalEffectsPtr, m.NumAdditionalEffects)
+		m.Name = utils.DecodePointerString(Data, m.namePtr)
+		m.Description = utils.DecodePointerString(Data, m.descriptionPtr)
+		if m.additionalEffectsPtr != NULL_POINTER {
+			m.AdditionalEffects = ParseMoveAdditionalEffects(Data, int(m.additionalEffectsPtr), m.NumAdditionalEffects)
 		}
 	}
 	return moves
 }
 
-func (m *MoveData) new(section []byte /* 52 bytes */) {
+func (m *MoveData) loadFromDataSection(section []byte /* 52/50 bytes */) {
 	m.namePtr = binary.LittleEndian.Uint32(section[0:4]) - POINTER_OFFSET
 	m.descriptionPtr = binary.LittleEndian.Uint32(section[4:8]) - POINTER_OFFSET
 	m.Effect = binary.LittleEndian.Uint16(section[8:10])
@@ -215,18 +211,35 @@ func (m *MoveData) new(section []byte /* 52 bytes */) {
 	m.SkyBattleBanned = section[27]&0b100>>2 == 1
 	// 4th bit of [27]
 	m.SketchBanned = section[27]&0b1000>>3 == 1
-	// last 4 bits are unused
-	// 4 bytes of padding
-	m.Argument = binary.LittleEndian.Uint32(section[32:36])
-	m.additionalEffectsPtr = binary.LittleEndian.Uint32(section[36:40]) - POINTER_OFFSET
-	m.ContestEffect = section[40]
+	// 5th bit of [27]
+	m.ValidApprenticeMove = section[27]&0b10000>>4 == 1
+	// last 3 bits are unused
+	// 1/3 bytes of padding
+	// 3 bytes padding:
+	if len(section) > 48 {
+		m.Argument = binary.LittleEndian.Uint32(section[32:36])
+		m.additionalEffectsPtr = binary.LittleEndian.Uint32(section[36:40]) - POINTER_OFFSET
+		m.ContestEffect = section[40]
+		// first 3 bits
+		m.ContestCategory = section[41] & 0x07
+		// last (most significant) 5 bits of [41] + first 3 bits of [42]
+		m.ContestComboStarterId = section[41]&0b1111000<<3 | section[42]&0b111
+		// rest of [42] is padding
+		copy(m.ContestComboMoves[:], section[43:48])
+		m.battleAnimScriptPtr = binary.LittleEndian.Uint32(section[48:52]) - POINTER_OFFSET
+		return
+	}
+	// 1 byte padding:
+	m.Argument = binary.LittleEndian.Uint32(section[28:32])
+	m.additionalEffectsPtr = binary.LittleEndian.Uint32(section[32:36]) - POINTER_OFFSET
+	m.ContestEffect = section[36]
 	// first 3 bits
-	m.ContestCategory = section[41] & 0x07
+	m.ContestCategory = section[37] & 0x07
 	// last (most significant) 5 bits of [41] + first 3 bits of [42]
-	m.ContestComboStarterId = section[41]&0b1111000<<3 | section[42]&0b111
+	m.ContestComboStarterId = section[37]&0b1111000<<3 | section[38]&0b111
 	// rest of [42] is padding
-	copy(m.ContestComboMoves[:], section[43:48])
-	m.battleAnimScriptPtr = binary.LittleEndian.Uint32(section[48:52]) - POINTER_OFFSET
+	copy(m.ContestComboMoves[:], section[39:44])
+	m.battleAnimScriptPtr = binary.LittleEndian.Uint32(section[44:48]) - POINTER_OFFSET
 }
 
 type MoveAdditionalEffect struct {
@@ -234,19 +247,22 @@ type MoveAdditionalEffect struct {
 	Self                    bool
 	OnlyIfTargetRaisedStats bool
 	OnChargeTurnOnly        bool
-	Chance                  uint8
+	SheerForceBoost         uint8 //:2 new in rhh 1.11.1
+	// Padding              uint8 //:3 new in rhh 1.11.1
+	Chance uint8
 }
 
-func ParseMoveAdditionalEffects(data []byte, offset uint32, count uint8) []*MoveAdditionalEffect {
+func ParseMoveAdditionalEffects(Data []byte, offset int, count uint8) []*MoveAdditionalEffect {
 	effects := make([]*MoveAdditionalEffect, 0)
 	for i := 0; i < int(count); i++ {
-		ix := offset + uint32(i)*MOVE_ADDITIONAL_EFFECTS_SIZE
+		ix := offset + i*Config.MoveAdditionalEffectsSize
 		effect := &MoveAdditionalEffect{
-			MoveEffect:              binary.LittleEndian.Uint16(data[ix : ix+2]),
-			Self:                    data[ix+2]&0x01 != 0,
-			OnlyIfTargetRaisedStats: data[ix+2]&0x02 != 0,
-			OnChargeTurnOnly:        data[ix+2]&0x04 != 0,
-			Chance:                  data[ix+3],
+			MoveEffect:              binary.LittleEndian.Uint16(Data[ix : ix+2]),
+			Self:                    Data[ix+2]&0x01 != 0,
+			OnlyIfTargetRaisedStats: Data[ix+2]&0x02 != 0,
+			OnChargeTurnOnly:        Data[ix+2]&0x04 != 0,
+			SheerForceBoost:         Data[ix+2] & 0b00110000,
+			Chance:                  Data[ix+3],
 		}
 		effects = append(effects, effect)
 	}

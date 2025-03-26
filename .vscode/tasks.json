@@ -9,8 +9,8 @@
       "args": [
         "run",
         "${workspaceFolder}/cmd",
-        "-gba='test/gba/pokeemerald.gba'",
-        "-o='species,evolutions,moves,learnsets,items'",
+        "-gba='test/gba/acheron-emerald.gba'",
+        "-o='species,evolutions,moves,learnsets,items,encounters'",
         "-jbp=our_"
       ],
       "group": {
@@ -25,8 +25,8 @@
       "args": [
         "run",
         "${workspaceFolder}/cmd",
-        "-gba='test/gba/rhh1.9.2.gba'",
-        "-o='species,evolutions,moves,learnsets,items'",
+        "-gba='test/gba/rhh1.11.8.gba'",
+        "-o='species,evolutions,moves,learnsets,items,encounters'",
         "-jbp=rhh_"
       ],
       "group": {
