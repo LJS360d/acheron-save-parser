@@ -234,6 +234,8 @@ func (s *SpeciesData) loadFromDataSection(section []byte /* 216 bytes */) {
 	s.BaseSpeed = section[0x3]
 	s.BaseSpAttack = section[0x4]
 	s.BaseSpDefense = section[0x5]
+	// added util
+	s.Bst = int(s.BaseHP) + int(s.BaseAttack) + int(s.BaseDefense) + int(s.BaseSpeed) + int(s.BaseSpAttack) + int(s.BaseSpDefense)
 	s.Types[0] = section[0x6]
 	s.Types[1] = section[0x7]
 	s.CatchRate = section[0x8]
@@ -335,10 +337,13 @@ func (s *SpeciesData) loadFromDataSection(section []byte /* 216 bytes */) {
 	s.EggMoveLearnsetPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
 	ptrsOffset += 4
 	s.evolutionsPtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.Evolutions = parseEvolutions(Data, s.evolutionsPtr)
 	ptrsOffset += 4
 	s.formSpeciesIdTablePtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.FormSpeciesIdTable = parseFormSpeciesIdTable(Data, s.formSpeciesIdTablePtr)
 	ptrsOffset += 4
 	s.formChangeTablePtr = binary.LittleEndian.Uint32(section[ptrsOffset:ptrsOffset+4]) - POINTER_OFFSET
+	s.FormChangeTable = parseFormChangeTable(Data, s.formChangeTablePtr)
 	ptrsOffset += 4
 
 	for i, v := range section[0xAC:0xB0] {
@@ -402,7 +407,6 @@ func (s *SpeciesData) loadFromDataSection260(section []byte /* 260 bytes */) {
 	if s.descriptionPtr != NULL_POINTER && s.descriptionPtr < uint32(len(Data)) {
 		s.Description = utils.DecodePointerString(Data, s.descriptionPtr)
 	}
-
 	// first 7 bits, big endian
 	s.BodyColor = section[i+22] & 0x7F
 	// last bit
