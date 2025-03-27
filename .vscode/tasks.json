@@ -52,9 +52,10 @@
     {
       "label": "Generate Pokemon Docs data",
       "type": "shell",
-      "command": "node",
+      "command": "go",
       "args": [
-        "${workspaceFolder}/scripts/build_compare.mjs",
+        "run",
+        "${workspaceFolder}/scripts/build_compare.go",
         "-new='./build/our_species.json'",
         "-old='./build/rhh_species.json'",
         "-id='id'",
@@ -69,9 +70,10 @@
     {
       "label": "Generate Learnsets Docs data",
       "type": "shell",
-      "command": "node",
+      "command": "go",
       "args": [
-        "${workspaceFolder}/scripts/build_compare.mjs",
+        "run",
+        "${workspaceFolder}/scripts/build_compare.go",
         "-new='./build/our_learnsets.json'",
         "-old='./build/rhh_learnsets.json'",
         "-id='species'",
@@ -86,9 +88,10 @@
     {
       "label": "Generate Evolutions Docs data",
       "type": "shell",
-      "command": "node",
+      "command": "go",
       "args": [
-        "${workspaceFolder}/scripts/build_compare.mjs",
+        "run",
+        "${workspaceFolder}/scripts/build_compare.go",
         "-new='./build/our_evolutions.json'",
         "-old='./build/rhh_evolutions.json'",
         "-id='family'",
@@ -104,9 +107,10 @@
     {
       "label": "Generate Items Docs data",
       "type": "shell",
-      "command": "node",
+      "command": "go",
       "args": [
-        "${workspaceFolder}/scripts/build_compare.mjs",
+        "run",
+        "${workspaceFolder}/scripts/build_compare.go",
         "-new='./build/our_items.json'",
         "-old='./build/rhh_items.json'",
         "-id='id'",
@@ -122,9 +126,10 @@
     {
       "label": "Generate Moves Docs data",
       "type": "shell",
-      "command": "node",
+      "command": "go",
       "args": [
-        "${workspaceFolder}/scripts/build_compare.mjs",
+        "run",
+        "${workspaceFolder}/scripts/build_compare.go",
         "-new='./build/our_moves.json'",
         "-old='./build/rhh_moves.json'",
         "-id='id'",
