@@ -3,6 +3,18 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Generate all GBA -> JSON data",
+      "type": "shell",
+      "dependsOn": [
+        "Generate JSON data (Our)",
+        "Generate JSON data (Rhh)"
+      ],
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Generate JSON data (Our)",
       "type": "shell",
       "command": "go",
@@ -42,7 +54,8 @@
         "Generate Learnsets Docs data",
         "Generate Evolutions Docs data",
         "Generate Moves Docs data",
-        "Generate Items Docs data"
+        "Generate Items Docs data",
+        "Generate Wild Encounters Docs data"
       ],
       "group": {
         "kind": "none",
@@ -59,7 +72,7 @@
         "-new='./build/our_species.json'",
         "-old='./build/rhh_species.json'",
         "-id='id'",
-        "-o='./build/pokemon.json,./../docs/src/data/pokemon.json'",
+        "-o='./build/pokemon.json'",
         "-d"
       ],
       "group": {
@@ -77,7 +90,7 @@
         "-new='./build/our_learnsets.json'",
         "-old='./build/rhh_learnsets.json'",
         "-id='species'",
-        "-o='./build/learnsets.json,./../docs/src/data/learnsets.json'",
+        "-o='./build/learnsets.json'",
         "-d"
       ],
       "group": {
@@ -95,7 +108,7 @@
         "-new='./build/our_evolutions.json'",
         "-old='./build/rhh_evolutions.json'",
         "-id='family'",
-        "-o='./build/evolutions.json,./../docs/src/data/evolutions.json'",
+        "-o='./build/evolutions.json'",
         "-s",
         "-d"
       ],
@@ -114,7 +127,7 @@
         "-new='./build/our_items.json'",
         "-old='./build/rhh_items.json'",
         "-id='id'",
-        "-o='./build/items.json,./../docs/src/data/items.json'",
+        "-o='./build/items.json'",
         "-s",
         "-d"
       ],
@@ -133,9 +146,41 @@
         "-new='./build/our_moves.json'",
         "-old='./build/rhh_moves.json'",
         "-id='id'",
-        "-o='./build/moves.json,./../docs/src/data/moves.json'",
+        "-o='./build/moves.json'",
         "-s",
         "-d"
+      ],
+      "group": {
+        "kind": "none",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Wild Encounters Docs data",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "run",
+        "${workspaceFolder}/scripts/build_compare.go",
+        "-new='./build/our_wild_encounters.json'",
+        "-old='./build/rhh_wild_encounters.json'",
+        "-id='mapNum'",
+        "-o='./build/wild_encounters.json'",
+        "-s",
+        "-d"
+      ],
+      "group": {
+        "kind": "none",
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Move docs data to docs prj",
+      "type": "shell",
+      "command": "mv",
+      "args": [
+        "./build/*.json",
+        "../../docs/src/data/"
       ],
       "group": {
         "kind": "none",
