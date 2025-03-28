@@ -43,7 +43,7 @@ var (
 			SpeciesInfoSize:           260,
 			WildEncounterSize:         20,
 			WildPokemonSize:           4,
-			WildEncountersOffset:      0x08e6c148 - POINTER_OFFSET, // from .map
+			WildEncountersOffset:      0x08edd49c - POINTER_OFFSET, // from .map
 			WildEncounterCount:        130,                         // TODO
 		},
 		"1.10.x": GbaConfig{},

@@ -36,7 +36,8 @@ lint:
 
 clean:
 	go clean
-	rmdir -d -f $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
+	rm -rf build
 
 run: build
 	./$(BUILDPATH)

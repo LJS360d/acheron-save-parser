@@ -179,8 +179,9 @@
       "type": "shell",
       "command": "mv",
       "args": [
+        "-Force",
         "./build/*.json",
-        "../../docs/src/data/"
+        "../docs/src/data/"
       ],
       "group": {
         "kind": "none",

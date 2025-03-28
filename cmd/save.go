@@ -318,7 +318,7 @@ func SaveMovesData(filepath string, m []*gba.MoveData) error {
 				}
 			}
 			return JSON{
-				"id":                i,
+				"id":                i + 1,
 				"name":              move.Name,
 				"description":       move.Description,
 				"type":              move.Type,

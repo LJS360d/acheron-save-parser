@@ -25,39 +25,36 @@ type WildPokemonHeader struct {
 	FishingMonsInfo   *WildPokemonInfo `json:"fishingMonsInfo"`
 }
 
-func ParseWildEncounters(offset int) []*WildPokemonHeader {
+func ParseWildEncounters(startOffset int) []*WildPokemonHeader {
 	encounters := make([]*WildPokemonHeader, 0)
-	if offset == NULL_POINTER || offset >= len(Data) {
-		log.Printf("[WARN] Wild encounters offset [%x] is null or out of bounds", offset)
+	if startOffset == NULL_POINTER || startOffset >= len(Data) {
+		log.Printf("[WARN] Wild encounters offset [%x] is null or out of bounds", startOffset)
 		return encounters
 	}
-	const WILD_ENCOUNTER_SIZE = 20
-	for i := offset; i+WILD_ENCOUNTER_SIZE < len(Data); i += WILD_ENCOUNTER_SIZE {
+	for i := 0; i < Config.WildEncounterCount; i++ {
+		offset := startOffset + i*Config.WildEncounterSize
 		encounter := &WildPokemonHeader{}
-		encounter.MapGroup = uint8(Data[i])
-		encounter.MapNum = uint8(Data[i+1])
+		encounter.MapGroup = uint8(Data[offset])
+		encounter.MapNum = uint8(Data[offset+1])
 		// align pointer, 2 bytes of padding
-		landMonsInfoPtr := binary.LittleEndian.Uint32(Data[i+4:]) - POINTER_OFFSET
-		encounter.LandMonsInfo = parseWildPokemonInfo(Data, landMonsInfoPtr)
+		landMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+4:]) - POINTER_OFFSET
+		encounter.LandMonsInfo = parseWildPokemonInfo(landMonsInfoPtr)
 
-		waterMonsInfoPtr := binary.LittleEndian.Uint32(Data[i+8:]) - POINTER_OFFSET
-		encounter.WaterMonsInfo = parseWildPokemonInfo(Data, waterMonsInfoPtr)
+		waterMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+8:]) - POINTER_OFFSET
+		encounter.WaterMonsInfo = parseWildPokemonInfo(waterMonsInfoPtr)
 
-		rockSmashMonsInfoPtr := binary.LittleEndian.Uint32(Data[i+12:]) - POINTER_OFFSET
-		encounter.RockSmashMonsInfo = parseWildPokemonInfo(Data, rockSmashMonsInfoPtr)
+		rockSmashMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+12:]) - POINTER_OFFSET
+		encounter.RockSmashMonsInfo = parseWildPokemonInfo(rockSmashMonsInfoPtr)
 
-		fishingMonsInfoPtr := binary.LittleEndian.Uint32(Data[i+16:]) - POINTER_OFFSET
-		encounter.FishingMonsInfo = parseWildPokemonInfo(Data, fishingMonsInfoPtr)
+		fishingMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+16:]) - POINTER_OFFSET
+		encounter.FishingMonsInfo = parseWildPokemonInfo(fishingMonsInfoPtr)
 
 		encounters = append(encounters, encounter)
-		if binary.LittleEndian.Uint16(Data[i+WILD_ENCOUNTER_SIZE:]) == 0xFFFF {
-			break
-		}
 	}
 	return encounters
 }
 
-func parseWildPokemonInfo(Data []byte, offset uint32) *WildPokemonInfo {
+func parseWildPokemonInfo(offset uint32) *WildPokemonInfo {
 	if offset == NULL_POINTER || offset >= uint32(len(Data)) {
 		return nil
 	}

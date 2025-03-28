@@ -6,12 +6,14 @@ import (
 )
 
 type ItemData struct {
+	// index in the Items array, added for convenience
+	Id              uint   `json:"id"`
 	Price           uint32 `json:"price"`
 	SecondaryId     uint16 `json:"secondaryId"`
-	fieldUseFuncPtr uint32 // ItemUseFunc
-	descriptionPtr  uint32
+	fieldUseFuncPtr uint32 `json:"-"`
+	descriptionPtr  uint32 `json:"-"`
 	Description     string `json:"description"`
-	effectPtr       uint32
+	effectPtr       uint32 `json:"-"`
 	Name            string `json:"name"`       // 20 bytes
 	PluralName      string `json:"pluralName"` // 22 bytes
 	HoldEffect      uint8  `json:"holdEffect"`
@@ -21,8 +23,8 @@ type ItemData struct {
 	Type            uint8  `json:"type"`
 	BattleUsage     uint8  `json:"battleUsage"`
 	FlingPower      uint8  `json:"flingPower"`
-	IconPicPtr      uint32
-	IconPalettePtr  uint32
+	IconPicPtr      uint32 `json:"-"`
+	IconPalettePtr  uint32 `json:"-"`
 }
 
 func ParseItemsInfoBytes(offset int, count int) []*ItemData {
@@ -30,6 +32,7 @@ func ParseItemsInfoBytes(offset int, count int) []*ItemData {
 	for i := 0; i < count; i++ {
 		n := &ItemData{}
 		n.loadFromDataSection(Data[offset+i*Config.ItemInfoSize : offset+i*Config.ItemInfoSize+Config.ItemInfoSize])
+		n.Id = uint(i)
 		items[i] = n
 		n.Description = utils.DecodePointerString(Data, n.descriptionPtr)
 	}
