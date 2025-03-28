@@ -25,6 +25,7 @@ type GbaConfig struct {
 	WildEncounterSize    int
 	WildPokemonSize      int
 	WildEncountersOffset int
+	WildEncounterCount   int
 }
 
 var (
@@ -36,13 +37,14 @@ var (
 			MoveInfoSize:              48,
 			MoveAdditionalEffectsSize: 4,
 			NatureInfoSize:            20,
-			NaturesOffset:             0x0869797c - POINTER_OFFSET,
+			NaturesOffset:             0x0869797c - POINTER_OFFSET, // from .map
 			NaturesCount:              25,
 			PokemonNameLength:         13,
 			SpeciesInfoSize:           260,
 			WildEncounterSize:         20,
 			WildPokemonSize:           4,
-			WildEncountersOffset:      0x08e6c148 - POINTER_OFFSET,
+			WildEncountersOffset:      0x08e6c148 - POINTER_OFFSET, // from .map
+			WildEncounterCount:        130,                         // TODO
 		},
 		"1.10.x": GbaConfig{},
 		"1.9.x": GbaConfig{
@@ -51,13 +53,14 @@ var (
 			MoveInfoSize:              52,
 			MoveAdditionalEffectsSize: 4,
 			NatureInfoSize:            20,
-			NaturesOffset:             0x08690498 - POINTER_OFFSET,
+			NaturesOffset:             0x08690498 - POINTER_OFFSET, // from .map
 			NaturesCount:              25,
 			PokemonNameLength:         13,
 			SpeciesInfoSize:           216,
 			WildEncounterSize:         20,
 			WildPokemonSize:           4,
-			WildEncountersOffset:      0x08e6c148 - POINTER_OFFSET, // TODO
+			WildEncountersOffset:      0x08de747c - POINTER_OFFSET, // from .map
+			WildEncounterCount:        130,
 		},
 	}
 )
