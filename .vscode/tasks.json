@@ -3,6 +3,20 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Generate, Compare and Move",
+      "type": "shell",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Generate all GBA -> JSON data",
+        "Generate All Docs data",
+        "Move docs data to docs prj",
+      ],
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Generate all GBA -> JSON data",
       "type": "shell",
       "dependsOn": [
@@ -31,6 +45,21 @@
       "problemMatcher": []
     },
     {
+      "label": "Generate Sprites (Our)",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "run",
+        "${workspaceFolder}/cmd",
+        "-gba='test/gba/acheron-emerald.gba'",
+        "-o='sprites'",
+      ],
+      "group": {
+        "kind": "build",
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Generate JSON data (Rhh)",
       "type": "shell",
       "command": "go",
@@ -49,6 +78,7 @@
     {
       "label": "Generate All Docs data",
       "type": "shell",
+      "dependsOrder": "parallel",
       "dependsOn": [
         "Generate Pokemon Docs data",
         "Generate Learnsets Docs data",

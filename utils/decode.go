@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -198,8 +199,13 @@ func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, wi
 		}
 	}
 
+	savePath := savename + ".png"
+	err := os.MkdirAll(filepath.Dir(savePath), 0755)
+	if err != nil {
+		return err
+	}
 	// Save the resulting image as a PNG file
-	file, err := os.Create(savename + ".png")
+	file, err := os.Create(savePath)
 	if err != nil {
 		return err
 	}
