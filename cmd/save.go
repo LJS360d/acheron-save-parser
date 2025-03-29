@@ -71,7 +71,7 @@ func SaveItemsIcons(data []byte, items []*gba.ItemData) error {
 		if err != nil {
 			return fmt.Errorf("ERROR DECOMPRESSING ICON FOR %d: %w", i, err)
 		}
-		err = utils.Save4bppImageBytes(iconBytes, "build/images/items/icons/"+fmt.Sprint(i), pal, 24, 24, true)
+		err = utils.Save4bppImageBytes(iconBytes, "build/images/items/icons/"+fmt.Sprint(i+1), pal, 24, 24, true)
 		if err != nil {
 			return fmt.Errorf("ERROR SAVING ITEM ICON FOR %d: %w", i, err)
 		}
@@ -92,7 +92,7 @@ func SaveSpeciesIcons(data []byte, s []*gba.SpeciesData, iconPalettesPtr uint32)
 		}
 		pal := iconPalettes[s[i].IconPalIndex]
 		iconBytes := data[s[i].IconSpritePtr : s[i].IconSpritePtr+1024]
-		err := utils.Save4bppImageBytes(iconBytes, "build/images/pokemon/icons/"+fmt.Sprint(i), pal, 32, 32, true)
+		err := utils.Save4bppImageBytes(iconBytes, "build/images/pokemon/icons/"+fmt.Sprint(i+1), pal, 32, 32, true)
 		if err != nil {
 			return fmt.Errorf("ERROR SAVING POKEMON ICON FOR %d: %w", i, err)
 		}
@@ -118,7 +118,7 @@ func SaveSpeciesSprites(data []byte, s []*gba.SpeciesData) error {
 		if err != nil {
 			return fmt.Errorf("ERROR DECOMPRESSING POKEMON FRONT PIC FOR %d: %w", i, err)
 		}
-		err = utils.Save4bppImageBytes(frontPicBytes, "build/images/pokemon/sprites/"+fmt.Sprint(i), pal, 64, 64, true)
+		err = utils.Save4bppImageBytes(frontPicBytes, "build/images/pokemon/sprites/"+fmt.Sprint(i+1), pal, 64, 64, true)
 		if err != nil {
 			return fmt.Errorf("ERROR SAVING POKEMON FRONT PIC FOR %d: %w", i, err)
 		}
@@ -185,7 +185,7 @@ func SaveSpeciesData(filepath string, s []*gba.SpeciesData) error {
 	return SaveJsonEncodable(filepath, utils.MapSlice(s,
 		func(mon *gba.SpeciesData, i int) JSON {
 			return JSON{
-				"id":          i,
+				"id":          i + 1,
 				"species":     getSpeciesIdentifier(mon, uint16(i+1)),
 				"speciesName": mon.SpeciesName,
 				"stats": jsonconvert.MarshalSlice([]uint8{
@@ -346,7 +346,7 @@ func SaveLearnsetsData(data []byte, filepath string, s []*gba.SpeciesData) error
 		func(mon *gba.SpeciesData, i int) JSON {
 			levelUpLearnset := parseLevelUpLearnset(data, mon.LevelUpLearnsetPtr)
 			return JSON{
-				"species": i,
+				"species": i + 1,
 				"levelUpLearnset": jsonconvert.MarshalSlice(
 					utils.MapSlice(levelUpLearnset, func(move *LevelUpMove, i int) JSON {
 						return JSON{
