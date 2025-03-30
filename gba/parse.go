@@ -230,5 +230,14 @@ func LoadGbaData(data []byte /* 33'554'432 Bytes */) *GbaHeader {
 		Natures = ParseNaturesInfoBytes(Config.NaturesOffset, Config.NaturesCount)
 		log.Println("Loaded natures")
 	}
+
+	mapGroupsMatrix := ParseRegionMapGroupsMatrix(Config.MapGroupsOffset)
+	regionLocations := ParseRegionMapLocations(Config.RegionLocationsOffset)
+	for _, we := range WildEncounters {
+		mapG := mapGroupsMatrix[we.MapGroup][we.MapNum]
+		locationName := regionLocations[mapG.RegionMapSectionID].Name
+		we.LocationName = locationName
+	}
+
 	return Header
 }

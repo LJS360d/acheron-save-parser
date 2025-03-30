@@ -22,7 +22,10 @@ type WildPokemonHeader struct {
 	LandMonsInfo      *WildPokemonInfo `json:"landMonsInfo"`
 	WaterMonsInfo     *WildPokemonInfo `json:"waterMonsInfo"`
 	RockSmashMonsInfo *WildPokemonInfo `json:"rockSmashMonsInfo"`
+	HiddenMonsInfo    *WildPokemonInfo `json:"hiddenMonsInfo"`
 	FishingMonsInfo   *WildPokemonInfo `json:"fishingMonsInfo"`
+	// added for convenience
+	LocationName string `json:"locationName"`
 }
 
 func ParseWildEncounters(startOffset int) []*WildPokemonHeader {
@@ -31,7 +34,7 @@ func ParseWildEncounters(startOffset int) []*WildPokemonHeader {
 		log.Printf("[WARN] Wild encounters offset [%x] is null or out of bounds", startOffset)
 		return encounters
 	}
-	for i := 0; i < Config.WildEncounterCount; i++ {
+	for i := 0; i+Config.WildEncounterSize < len(Data); i++ {
 		offset := startOffset + i*Config.WildEncounterSize
 		encounter := &WildPokemonHeader{}
 		encounter.MapGroup = uint8(Data[offset])
@@ -46,8 +49,23 @@ func ParseWildEncounters(startOffset int) []*WildPokemonHeader {
 		rockSmashMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+12:]) - POINTER_OFFSET
 		encounter.RockSmashMonsInfo = parseWildPokemonInfo(rockSmashMonsInfoPtr)
 
-		fishingMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+16:]) - POINTER_OFFSET
+		hiddenMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+16:]) - POINTER_OFFSET
+		encounter.HiddenMonsInfo = parseWildPokemonInfo(hiddenMonsInfoPtr)
+
+		fishingMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+20:]) - POINTER_OFFSET
 		encounter.FishingMonsInfo = parseWildPokemonInfo(fishingMonsInfoPtr)
+
+		if encounter.LandMonsInfo == nil &&
+			encounter.WaterMonsInfo == nil &&
+			encounter.RockSmashMonsInfo == nil &&
+			encounter.FishingMonsInfo == nil &&
+			encounter.MapGroup == 0xFF &&
+			encounter.MapNum == 0xFF {
+			// the last entry is a sentinel value with all pointers set to NULL and
+			// MAP_GROUP(UNDEFINED) -> 0xFF
+			// MAP_NUM(UNDEFINED) -> 0xFF
+			break
+		}
 
 		encounters = append(encounters, encounter)
 	}
@@ -64,13 +82,13 @@ func parseWildPokemonInfo(offset uint32) *WildPokemonInfo {
 	}
 	// align pointer, 3 bytes of padding
 	wildPokemonPtr := binary.LittleEndian.Uint32(Data[offset+4:]) - POINTER_OFFSET
-	const WILD_POKEMON_SIZE = 4
-	for i := wildPokemonPtr; i+WILD_POKEMON_SIZE < uint32(len(Data)); i += WILD_POKEMON_SIZE {
+	for i := wildPokemonPtr; i+uint32(Config.WildPokemonSize) < uint32(len(Data)); i += uint32(Config.WildPokemonSize) {
 		wildPokemon := &WildPokemon{
 			MinLevel: Data[i],
 			MaxLevel: Data[i+1],
 			Species:  binary.LittleEndian.Uint16(Data[i+2:]),
 		}
+		// TODO
 		if wildPokemon.MinLevel == 0 || wildPokemon.MaxLevel == 0 || wildPokemon.Species == 0 {
 			// in the original C code the array is fixed size, so theres no standard way to know when to stop reading
 			// so we just check that an entry that was parsed makes no sense

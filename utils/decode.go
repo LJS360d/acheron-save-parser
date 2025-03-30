@@ -12,6 +12,14 @@ import (
 	"strings"
 )
 
+// AlignPointer aligns the given offset to the next 4 byte boundary
+func AlignPointer(offset int) int {
+	if offset%4 == 0 {
+		return offset
+	}
+	return offset + (4 - (offset % 4))
+}
+
 func DecodePointerString(data []byte, offset uint32) string {
 	start := int(offset)
 	end := start
