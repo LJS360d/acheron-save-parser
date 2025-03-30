@@ -83,19 +83,19 @@ var (
 			MoveInfoSize:              utils.AlignPointer(52),
 			MoveAdditionalEffectsSize: utils.AlignPointer(4),
 			NatureInfoSize:            utils.AlignPointer(20),
-			NaturesOffset:             0x08690498 - POINTER_OFFSET,
+			NaturesOffset:             0x086923f0 - POINTER_OFFSET,
 			NaturesCount:              25,
 			PokemonNameLength:         13,
 			SpeciesInfoSize:           utils.AlignPointer(216),
-			WildEncounterSize:         utils.AlignPointer(24),
+			WildEncounterSize:         utils.AlignPointer(20),
 			WildPokemonSize:           utils.AlignPointer(4),
 			WildEncountersOffset:      0x08de747c - POINTER_OFFSET,
 			MapGroupsOffset:           0x08edb4f0 - POINTER_OFFSET,
-			MapGroupSize:              utils.AlignPointer(27),                                                                                                      // TODO
-			MapGroupCounts:            []int{57, 5, 5, 6, 7, 8, 9, 7, 7, 14, 8, 17, 10, 23, 13, 15, 15, 2, 2, 2, 3, 1, 1, 1, 108, 61, 89, 2, 1, 13, 1, 1, 3, 1, 0}, // TODO
+			MapGroupSize:              utils.AlignPointer(27),
+			MapGroupCounts:            []int{58, 5, 5, 6, 7, 8, 9, 7, 7, 14, 8, 17, 10, 23, 13, 15, 15, 2, 2, 2, 3, 1, 1, 1, 108, 61, 89, 2, 1, 13, 1, 1, 3, 1, 0},
 			RegionLocationsOffset:     0x08cf93b4 - POINTER_OFFSET,
-			RegionLocationSize:        utils.AlignPointer(8), // TODO
-			RegionLocationsCount:      213,                   // TODO
+			RegionLocationSize:        utils.AlignPointer(8),
+			RegionLocationsCount:      215,
 		},
 	}
 )

@@ -22,7 +22,7 @@ type WildPokemonHeader struct {
 	LandMonsInfo      *WildPokemonInfo `json:"landMonsInfo"`
 	WaterMonsInfo     *WildPokemonInfo `json:"waterMonsInfo"`
 	RockSmashMonsInfo *WildPokemonInfo `json:"rockSmashMonsInfo"`
-	HiddenMonsInfo    *WildPokemonInfo `json:"hiddenMonsInfo"`
+	HiddenMonsInfo    *WildPokemonInfo `json:"hiddenMonsInfo"` // for 1.11.x+
 	FishingMonsInfo   *WildPokemonInfo `json:"fishingMonsInfo"`
 	// added for convenience
 	LocationName string `json:"locationName"`
@@ -48,12 +48,18 @@ func ParseWildEncounters(startOffset int) []*WildPokemonHeader {
 
 		rockSmashMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+12:]) - POINTER_OFFSET
 		encounter.RockSmashMonsInfo = parseWildPokemonInfo(rockSmashMonsInfoPtr)
+		if Config.WildEncounterSize >= 24 {
+			//  1.11.x
+			hiddenMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+16:]) - POINTER_OFFSET
+			encounter.HiddenMonsInfo = parseWildPokemonInfo(hiddenMonsInfoPtr)
 
-		hiddenMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+16:]) - POINTER_OFFSET
-		encounter.HiddenMonsInfo = parseWildPokemonInfo(hiddenMonsInfoPtr)
-
-		fishingMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+20:]) - POINTER_OFFSET
-		encounter.FishingMonsInfo = parseWildPokemonInfo(fishingMonsInfoPtr)
+			fishingMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+20:]) - POINTER_OFFSET
+			encounter.FishingMonsInfo = parseWildPokemonInfo(fishingMonsInfoPtr)
+		} else {
+			// 1.9.x
+			fishingMonsInfoPtr := binary.LittleEndian.Uint32(Data[offset+16:]) - POINTER_OFFSET
+			encounter.FishingMonsInfo = parseWildPokemonInfo(fishingMonsInfoPtr)
+		}
 
 		if encounter.LandMonsInfo == nil &&
 			encounter.WaterMonsInfo == nil &&
