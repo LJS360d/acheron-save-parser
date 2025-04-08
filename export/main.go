@@ -30,7 +30,7 @@ func ParseGbaBytes(this js.Value, args []js.Value) any {
 	data := make([]byte, fileBuffer.Get("length").Int())
 	js.CopyBytesToGo(data, fileBuffer)
 
-	gbaData := gba.LoadGbaData(data)
+	gbaData := gba.LoadGbaData(data, "")
 	log.Printf("Loaded GBA Rom data\nSpecies: %d\nItems: %d\nMoves: %d\nAbilities: %d\nNatures: %d\n",
 		len(gba.Species),
 		len(gba.Items),

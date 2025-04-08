@@ -22,7 +22,7 @@ var VersionDataSymbols = []string{
 }
 
 func main() {
-	regions, err := memmap.ParseMemoryMap("test/memmap/acheron-emerald1.11.1.map")
+	regions, err := memmap.ParseMemoryMap("test/memmap/acheron-emerald.map")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return

@@ -107,7 +107,7 @@ type GbaHeader struct {
 	ItemNameLength uint8  // 20
 }
 
-func LoadGbaData(data []byte /* 33'554'432 Bytes */) *GbaHeader {
+func LoadGbaData(data []byte /* 33'554'432 Bytes */, versionSuffix string) *GbaHeader {
 	Data = data
 	Header = &GbaHeader{
 		// --- GF Header ---
@@ -214,7 +214,7 @@ func LoadGbaData(data []byte /* 33'554'432 Bytes */) *GbaHeader {
 	version := fmt.Sprintf("%d.%d.%d", Header.MajorVersion, Header.MinorVersion, Header.PatchVersion)
 	log.Println("Loaded header")
 	log.Printf("Detected Emerald Expansion version: %s (%s)\n", version, tagStatus)
-	Config = GetGbaConfig(version)
+	Config = GetGbaConfig(version + versionSuffix)
 	log.Printf("Using config: %s\n", Config.Match)
 	Abilities = ParseAbilitiesBytes(int(Header.AbilitiesPtr), int(Header.AbilitiesCount))
 	log.Println("Loaded abilities")

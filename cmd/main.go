@@ -20,7 +20,7 @@ func main() {
 	gbaFile := flag.String("g", "", "Path to the GBA ROM file (.gba)")
 	outputs := flag.String("o", "", "Comma-separated list of outputs to generate (e.g., species,evolutions,moves,learnsets,items,sprites)")
 	jsonBuildsPrefix := flag.String("jbp", "", "Prefix to use for JSON builds (generated files under build will have this prefix)")
-
+	versionSuffix := flag.String("vs", "", "Suffix to use for loading the GBAConfig (e.g., -a for acheron-emerald)")
 	flag.StringVar(savFile, "sav", "", "Path to the save file (.sav)")
 	flag.StringVar(gbaFile, "gba", "", "Path to the GBA ROM file (.gba)")
 	flag.StringVar(outputs, "output", "", "Comma-separated list of outputs to generate (e.g., species,evolutions,moves,learnsets,items,sprites)")
@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	g := gba.LoadGbaData(gbaBytes)
+	g := gba.LoadGbaData(gbaBytes, *versionSuffix)
 	if *savFile != "" {
 		savBytes, err := os.ReadFile(*savFile)
 		if err != nil {

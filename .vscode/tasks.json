@@ -37,7 +37,8 @@
         "${workspaceFolder}/cmd",
         "-gba='test/gba/acheron-emerald.gba'",
         "-o='species,evolutions,moves,learnsets,items,encounters'",
-        "-jbp=our_"
+        "-jbp=our_",
+        "-vs=-a"
       ],
       "group": {
         "kind": "build",
