@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	configData := gba.GetGbaConfig("")
+	configData := gba.GetGbaConfig("1.11.1-a")
 
 	tmplString := `GbaConfig{
 	AbilityInfoSize:           utils.AlignPointer({{ .AbilityInfoSize }}),
