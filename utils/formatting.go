@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"reflect"
 	"strings"
 	"unicode"
 )
@@ -71,4 +72,30 @@ func ToKebabCase(s string) string {
 	}
 
 	return result.String()
+}
+
+// Merge combines two objects of the same type.
+// The resulting object is a copy of the first object,
+// with any non-zero values from the second object overwriting the corresponding fields.
+func Merge[T any](target T, source T) T {
+	targetVal := reflect.ValueOf(&target).Elem()
+	sourceVal := reflect.ValueOf(&source).Elem()
+
+	// Ensure both are structs
+	if targetVal.Kind() != reflect.Struct || sourceVal.Kind() != reflect.Struct {
+		panic("Merge can only be used with structs")
+	}
+
+	for i := 0; i < sourceVal.NumField(); i++ {
+		sourceField := sourceVal.Field(i)
+		targetField := targetVal.Field(i)
+
+		// Check if the source field is a non-zero value.
+		// We use reflect.DeepEqual to compare with the zero value of its type.
+		if !reflect.DeepEqual(sourceField.Interface(), reflect.Zero(sourceField.Type()).Interface()) {
+			targetField.Set(sourceField)
+		}
+	}
+
+	return target
 }

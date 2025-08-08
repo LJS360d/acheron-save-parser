@@ -16,6 +16,7 @@ var (
 	Header         *GbaHeader
 	Abilities      []*AbilityData
 	Species        []*SpeciesData
+	Trainers       []*Trainer
 	Items          []*ItemData
 	Natures        []*NatureData
 	Moves          []*MoveData

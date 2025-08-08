@@ -36,9 +36,10 @@
         "run",
         "${workspaceFolder}/cmd",
         "-gba='test/gba/acheron-emerald.gba'",
-        "-o='species,evolutions,moves,learnsets,items,encounters'",
+        "-map='test/memmap/acheron-emerald.map'",
+        "-o='species,evolutions,moves,learnsets,items,encounters,trainers'",
         "-jbp=our_",
-        "-vs=-a"
+        "-vextra=acheron-emerald"
       ],
       "group": {
         "kind": "build",
@@ -54,6 +55,7 @@
         "${workspaceFolder}/cmd",
         "-gba='test/gba/acheron-emerald.gba'",
         "-o='sprites'",
+        "-vs=-a"
       ],
       "group": {
         "kind": "build",
@@ -68,7 +70,8 @@
         "run",
         "${workspaceFolder}/cmd",
         "-gba='test/gba/rhh1.11.8.gba'",
-        "-o='species,evolutions,moves,learnsets,items,encounters'",
+        "-map='test/memmap/rhh1.11.8.map'",
+        "-o='species,evolutions,moves,learnsets,items,encounters,trainers'",
         "-jbp=rhh_"
       ],
       "group": {
@@ -86,7 +89,8 @@
         "Generate Evolutions Docs data",
         "Generate Moves Docs data",
         "Generate Items Docs data",
-        "Generate Wild Encounters Docs data"
+        "Generate Wild Encounters Docs data",
+        "Generate Trainers Docs data",
       ],
       "group": {
         "kind": "none",
@@ -197,6 +201,25 @@
         "-old='./build/rhh_wild_encounters.json'",
         "-id='mapNum'",
         "-o='./build/wild_encounters.json'",
+        "-s",
+        "-d"
+      ],
+      "group": {
+        "kind": "none",
+      },
+      "problemMatcher": []
+    },
+        {
+      "label": "Generate Trainers Docs data",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "run",
+        "${workspaceFolder}/scripts/build_compare.go",
+        "-new='./build/our_trainers.json'",
+        "-old='./build/rhh_trainers.json'",
+        "-id='mapNum'",
+        "-o='./build/trainers.json'",
         "-s",
         "-d"
       ],

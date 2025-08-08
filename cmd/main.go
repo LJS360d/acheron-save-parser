@@ -2,6 +2,7 @@ package main
 
 import (
 	"acheron-save-parser/gba"
+	"acheron-save-parser/memmap"
 	"acheron-save-parser/sav"
 	"flag"
 	"log"
@@ -18,21 +19,71 @@ var (
 func main() {
 	savFile := flag.String("s", "", "Path to the save file (.sav)")
 	gbaFile := flag.String("g", "", "Path to the GBA ROM file (.gba)")
+	mapFile := flag.String("m", "", "Path to the build memory map file (.map)")
 	outputs := flag.String("o", "", "Comma-separated list of outputs to generate (e.g., species,evolutions,moves,learnsets,items,sprites)")
 	jsonBuildsPrefix := flag.String("jbp", "", "Prefix to use for JSON builds (generated files under build will have this prefix)")
-	versionSuffix := flag.String("vs", "", "Suffix to use for loading the GBAConfig (e.g., -a for acheron-emerald)")
+	versionExtra := flag.String("vextra", "", "For loading extra GBAConfig for specific builds (e.g., acheron-emerald)")
+
 	flag.StringVar(savFile, "sav", "", "Path to the save file (.sav)")
 	flag.StringVar(gbaFile, "gba", "", "Path to the GBA ROM file (.gba)")
+	flag.StringVar(mapFile, "map", "", "Path to the build memory map file (.map)")
+
 	flag.StringVar(outputs, "output", "", "Comma-separated list of outputs to generate (e.g., species,evolutions,moves,learnsets,items,sprites)")
 	flag.StringVar(jsonBuildsPrefix, "jsonBuildsPrefix", "", "Prefix to use for JSON builds (generated files under build will have this prefix)")
 
 	flag.Parse()
 	log.Printf("Save file path: %s\n", *savFile)
 	log.Printf("GBA file path: %s\n", *gbaFile)
+	log.Printf("Map file path: %s\n", *mapFile)
 	log.Printf("Outputs: %s\n", *outputs)
 
 	if *gbaFile == "" {
 		log.Fatal("-g/-gba flag is required.")
+	}
+
+	if *mapFile != "" {
+		regions, err := memmap.ParseMemoryMap(*mapFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, region := range regions {
+			if region.Symbol == "gAbilitiesInfo" {
+				gba.Config.AbilitiesOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gItemsInfo" {
+				gba.Config.ItemsOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gMovesInfo" {
+				gba.Config.MovesOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gNaturesInfo" {
+				gba.Config.NaturesOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gSpeciesInfo" {
+				gba.Config.SpeciesOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gWildMonHeaders" {
+				gba.Config.WildEncountersOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gMapGroups" {
+				gba.Config.MapGroupsOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gRegionMapEntries" {
+				gba.Config.RegionLocationsOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+			if region.Symbol == "gTrainers" {
+				gba.Config.TrainersOffset = int(region.Address) - gba.POINTER_OFFSET
+				continue
+			}
+		}
 	}
 
 	if *jsonBuildsPrefix != "" {
@@ -43,7 +94,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	g := gba.LoadGbaData(gbaBytes, *versionSuffix)
+
+	g := gba.LoadGbaData(gbaBytes, *versionExtra)
 	if *savFile != "" {
 		savBytes, err := os.ReadFile(*savFile)
 		if err != nil {
@@ -59,6 +111,12 @@ func main() {
 	if slices.Contains(selectedOutputs, "evolutions") {
 		buildTask(&wg, "Evolutions data", func() error {
 			return SaveEvolutionsData("build/"+JSON_BUILDS_PREFIX+"evolutions.json", gba.Species)
+		})
+	}
+
+	if slices.Contains(selectedOutputs, "trainers") {
+		buildTask(&wg, "Trainers data", func() error {
+			return SaveJsonEncodable("build/"+JSON_BUILDS_PREFIX+"trainers.json", gba.Trainers)
 		})
 	}
 
