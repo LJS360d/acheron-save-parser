@@ -35,7 +35,7 @@ use: $(BUILDPATH)
 BUILD_COMPARE := scripts/build_compare.go
 RES_DIR := build
 cmp: use
-	go run $(BUILD_COMPARE) -new='$(RES_DIR)/$(USE_JBP_OUR)species.json' -old='$(RES_DIR)/$(USE_JBP_RHH)species.json' -id='id' -o='$(RES_DIR)/pokemon.json' -d
+	go run $(BUILD_COMPARE) -new='$(RES_DIR)/$(USE_JBP_OUR)species.json' -old='$(RES_DIR)/$(USE_JBP_RHH)species.json' -id='id' -o='$(RES_DIR)/species.json' -d
 	go run $(BUILD_COMPARE) -new='$(RES_DIR)/$(USE_JBP_OUR)learnsets.json' -old='$(RES_DIR)/$(USE_JBP_RHH)learnsets.json' -id='species' -o='$(RES_DIR)/learnsets.json' -d
 	go run $(BUILD_COMPARE) -new='$(RES_DIR)/$(USE_JBP_OUR)evolutions.json' -old='$(RES_DIR)/$(USE_JBP_RHH)evolutions.json' -id='family' -o='$(RES_DIR)/evolutions.json' -d
 	go run $(BUILD_COMPARE) -new='$(RES_DIR)/$(USE_JBP_OUR)items.json' -old='$(RES_DIR)/$(USE_JBP_RHH)items.json' -id='id' -o='$(RES_DIR)/items.json' -d

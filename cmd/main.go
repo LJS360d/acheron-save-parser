@@ -46,46 +46,27 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// Create a map to associate symbols with their corresponding offset pointers
+		symbolOffsets := map[string]*int{
+			"gAbilitiesInfo":    &gba.Config.AbilitiesOffset,
+			"gItemsInfo":        &gba.Config.ItemsOffset,
+			"gMovesInfo":        &gba.Config.MovesOffset,
+			"gNaturesInfo":      &gba.Config.NaturesOffset,
+			"gSpeciesInfo":      &gba.Config.SpeciesOffset,
+			"gWildMonHeaders":   &gba.Config.WildEncountersOffset,
+			"gMapGroups":        &gba.Config.MapGroupsOffset,
+			"gRegionMapEntries": &gba.Config.RegionLocationsOffset,
+			"gTrainers":         &gba.Config.TrainersOffset,
+		}
+
+		// Iterate through regions and update the offsets using the map
 		for _, region := range regions {
-			if region.Symbol == "gAbilitiesInfo" {
-				gba.Config.AbilitiesOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gItemsInfo" {
-				gba.Config.ItemsOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gMovesInfo" {
-				gba.Config.MovesOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gNaturesInfo" {
-				gba.Config.NaturesOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gSpeciesInfo" {
-				gba.Config.SpeciesOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gWildMonHeaders" {
-				gba.Config.WildEncountersOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gMapGroups" {
-				gba.Config.MapGroupsOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gRegionMapEntries" {
-				gba.Config.RegionLocationsOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
-			}
-			if region.Symbol == "gTrainers" {
-				gba.Config.TrainersOffset = int(region.Address) - gba.POINTER_OFFSET
-				continue
+			if offsetPtr, ok := symbolOffsets[region.Symbol]; ok {
+				*offsetPtr = int(region.Address) - gba.POINTER_OFFSET
 			}
 		}
 	}
-
 	if *jsonBuildsPrefix != "" {
 		JSON_BUILDS_PREFIX = *jsonBuildsPrefix
 	}

@@ -107,7 +107,7 @@
         "-new='./build/our_species.json'",
         "-old='./build/rhh_species.json'",
         "-id='id'",
-        "-o='./build/pokemon.json'",
+        "-o='./build/species.json'",
         "-d"
       ],
       "group": {
