@@ -48,6 +48,7 @@ const (
 	ICON_PALETTES_COUNT     = 6
 	PALETTE_SIZE            = 32
 	COMPRESSED_PALETTE_SIZE = 40 // yes compressed is bigger than uncompressed, gamefreak probably had a reason to compress otherwise they just had the big stupid
+	COMPRESSED_SPRITE_SIZE  = 4096
 )
 
 func SaveItemsIcons(data []byte, items []*gba.ItemData) error {
@@ -113,7 +114,7 @@ func SaveSpeciesSprites(data []byte, s []*gba.SpeciesData) error {
 		if err != nil {
 			return fmt.Errorf("MISSING POKEMON PALETTE FOR %d: %w", i, err)
 		}
-		frontPicBytesCompressed := data[s[i].FrontPicPtr : s[i].FrontPicPtr+4096]
+		frontPicBytesCompressed := data[s[i].FrontPicPtr : s[i].FrontPicPtr+COMPRESSED_SPRITE_SIZE]
 		frontPicBytes, err := utils.DecompressLZ77(frontPicBytesCompressed)
 		if err != nil {
 			return fmt.Errorf("ERROR DECOMPRESSING POKEMON FRONT PIC FOR %d: %w", i, err)
@@ -121,6 +122,32 @@ func SaveSpeciesSprites(data []byte, s []*gba.SpeciesData) error {
 		err = utils.Save4bppImageBytes(frontPicBytes, "build/images/pokemon/sprites/"+fmt.Sprint(i+1), pal, 64, 64, true)
 		if err != nil {
 			return fmt.Errorf("ERROR SAVING POKEMON FRONT PIC FOR %d: %w", i, err)
+		}
+	}
+	return nil
+}
+
+func SaveTrainerSprites(data []byte, t []*gba.TrainerSprite) error {
+	for i, trainer := range t {
+		if trainer.FrontPic.DataPtr == gba.NULL_POINTER {
+			continue
+		}
+		decompressedPalBytes, err := utils.DecompressLZ77(data[trainer.Palette.DataPtr : trainer.Palette.DataPtr+COMPRESSED_PALETTE_SIZE])
+		if err != nil {
+			return fmt.Errorf("error decompressing trainer sprite palette for %d: %w", i, err)
+		}
+		pal := utils.ParsePaletteBytes(decompressedPalBytes)
+		if err != nil {
+			return fmt.Errorf("missing trainer sprite palette for %d: %w", i, err)
+		}
+		frontPicBytesCompressed := data[trainer.FrontPic.DataPtr : trainer.FrontPic.DataPtr+COMPRESSED_SPRITE_SIZE]
+		frontPicBytes, err := utils.DecompressLZ77(frontPicBytesCompressed)
+		if err != nil {
+			return fmt.Errorf("error decompressing trainer sprite for %d: %w", i, err)
+		}
+		err = utils.Save4bppImageBytes(frontPicBytes, "build/images/trainers/sprites/"+fmt.Sprint(i+1), pal, 64, 64, true)
+		if err != nil {
+			return fmt.Errorf("error saving trainer sprite for %d: %w", i, err)
 		}
 	}
 	return nil
@@ -335,10 +362,6 @@ func SaveMovesData(filepath string, m []*gba.MoveData) error {
 				"flags":             jsonconvert.MarshalSlice(getMoveFlags(move)),
 			}
 		}))
-}
-
-func SaveItemsData(filepath string, items []*gba.ItemData) error {
-	return SaveJsonEncodable(filepath, items)
 }
 
 func SaveLearnsetsData(data []byte, filepath string, s []*gba.SpeciesData) error {

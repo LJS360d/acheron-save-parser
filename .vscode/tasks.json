@@ -53,9 +53,10 @@
       "args": [
         "run",
         "${workspaceFolder}/cmd",
+        "-map='test/memmap/acheron-emerald.map'",
         "-gba='test/gba/acheron-emerald.gba'",
         "-o='sprites'",
-        "-vs=-a"
+        "-vextra=acheron-emerald"
       ],
       "group": {
         "kind": "build",

@@ -12,7 +12,8 @@
         "-gba=test/gba/acheron-emerald.gba",
         "-map=test/memmap/acheron-emerald.map",
         "-o=species,evolutions,moves,learnsets,items,encounters,trainers",
-        "-jbp=our_"
+        "-jbp=our_",
+        "-vextra=acheron-emerald"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"

@@ -58,6 +58,7 @@ func main() {
 			"gMapGroups":        &gba.Config.MapGroupsOffset,
 			"gRegionMapEntries": &gba.Config.RegionLocationsOffset,
 			"gTrainers":         &gba.Config.TrainersOffset,
+			"gTrainerSprites":   &gba.Config.TrainerSpritesOffset,
 		}
 
 		// Iterate through regions and update the offsets using the map
@@ -103,7 +104,7 @@ func main() {
 
 	if slices.Contains(selectedOutputs, "items") {
 		buildTask(&wg, "Items data", func() error {
-			return SaveItemsData("build/"+JSON_BUILDS_PREFIX+"items.json", gba.Items[1:])
+			return SaveJsonEncodable("build/"+JSON_BUILDS_PREFIX+"items.json", gba.Items[1:])
 		})
 	}
 
@@ -136,6 +137,10 @@ func main() {
 
 		buildTask(&wg, "Item icons", func() error {
 			return SaveItemsIcons(gbaBytes, gba.Items[1:])
+		})
+
+		buildTask(&wg, "Trainer sprites", func() error {
+			return SaveTrainerSprites(gbaBytes, gba.ParseTrainerSpritesBytes(gba.Config.TrainerSpritesOffset, gba.Config.TrainerSpritesCount))
 		})
 	}
 

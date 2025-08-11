@@ -57,6 +57,12 @@ type GbaConfig struct {
 	TrainerStructSize    int // size in bytes of Trainer struct in include/data.h
 	TrainersCount        int // array length of gTrainers in include/constants/opponents.h, named TRAINERS_COUNT
 	TrainerMonStructSize int // size in bytes of TrainerMon struct in include/data.h
+
+	// trainer sprites
+
+	TrainerSpriteStructSize int // size in bytes of TrainerSprite struct in include/data.h
+	TrainerSpritesOffset    int // gTrainerSprites from .map (autoloaded)
+	TrainerSpritesCount     int // array length of gTrainerSprites in include/constants/trainers.h, named TRAINER_PIC_COUNT (not actually used at compile time for gTrainerSprites)
 }
 
 var (
@@ -80,6 +86,8 @@ var (
 			TrainerStructSize:         utils.AlignPointer(40),
 			TrainersCount:             2568,
 			TrainerMonStructSize:      utils.AlignPointer(36),
+			TrainerSpriteStructSize:   utils.AlignPointer(29),
+			TrainerSpritesCount:       93,
 		},
 		"acheron-emerald": GbaConfig{
 			MapGroupCounts:       []int{58, 5, 5, 6, 7, 8, 9, 7, 7, 14, 8, 17, 10, 23, 13, 15, 15, 2, 2, 2, 3, 1, 1, 1, 108, 61, 89, 2, 1, 13, 1, 1, 3, 1, 0},

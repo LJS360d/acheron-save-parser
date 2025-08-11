@@ -11,6 +11,28 @@ const MAX_TRAINER_ITEMS = 4
 // TRAINER_NAME_LENGTH is the length of a trainer's name.
 const TRAINER_NAME_LENGTH = 10
 
+// Trainer represents an NPC trainer.
+type Trainer struct {
+	AiFlags              uint32       `json:"aiFlags"`
+	Party                []TrainerMon `json:"party"` // built as just *TrainerMon
+	Items                [4]uint16    `json:"items"`
+	TrainerClass         uint8        `json:"trainerClass"`
+	EncounterMusicGender uint8        `json:"encounterMusicGender"` // last bit is gender
+	TrainerPic           uint8        `json:"trainerPic"`
+	TrainerName          string       `json:"trainerName"`  // built as [11]uint8
+	DoubleBattle         bool         `json:"doubleBattle"` // 1 bit
+
+	// Padding              bool   // 1 bit
+
+	StartingStatus uint8 `json:"startingStatus"` // 6 bits
+	MugshotColor   uint8 `json:"mugshotColor"`
+	PartySize      uint8 `json:"partySize"`
+	PoolSize       uint8 `json:"poolSize"`
+	PoolRuleIndex  uint8 `json:"poolRuleIndex"`
+	PoolPickIndex  uint8 `json:"poolPickIndex"`
+	PoolPruneIndex uint8 `json:"poolPruneIndex"`
+}
+
 // TrainerMon represents a single Pokémon in a trainer's party.
 type TrainerMon struct {
 	Nickname         string    `json:"nickname"` // originally *uint8, pointer to a string
@@ -39,26 +61,63 @@ type TrainerMon struct {
 	Tags uint32 `json:"tags"`
 }
 
-// Trainer represents an NPC trainer.
-type Trainer struct {
-	AiFlags              uint32       `json:"aiFlags"`
-	Party                []TrainerMon `json:"party"` // built as just *TrainerMon
-	Items                [4]uint16    `json:"items"`
-	TrainerClass         uint8        `json:"trainerClass"`
-	EncounterMusicGender uint8        `json:"encounterMusicGender"` // last bit is gender
-	TrainerPic           uint8        `json:"trainerPic"`
-	TrainerName          string       `json:"trainerName"`  // built as [11]uint8
-	DoubleBattle         bool         `json:"doubleBattle"` // 1 bit
+// TrainerSprite represents a sprite for a trainer.
+type TrainerSprite struct {
+	YOffset         uint8
+	FrontPic        CompressedSpriteSheet
+	Palette         CompressedSpritePalette
+	AnimCmdPtr      uint32 // [][]AnimCmd
+	MugshotCoords   Coords16
+	MugshotRotation int16
+}
 
-	// Padding              bool   // 1 bit
+// CompressedSpriteSheet holds compressed pixel data for a sprite.
+type CompressedSpriteSheet struct {
+	DataPtr uint32
+	Size    uint16
+	Tag     uint16
+}
 
-	StartingStatus uint8 `json:"startingStatus"` // 6 bits
-	MugshotColor   uint8 `json:"mugshotColor"`
-	PartySize      uint8 `json:"partySize"`
-	PoolSize       uint8 `json:"poolSize"`
-	PoolRuleIndex  uint8 `json:"poolRuleIndex"`
-	PoolPickIndex  uint8 `json:"poolPickIndex"`
-	PoolPruneIndex uint8 `json:"poolPruneIndex"`
+// CompressedSpritePalette holds compressed palette data.
+type CompressedSpritePalette struct {
+	DataPtr uint32
+	Tag     uint16
+}
+
+// Coords16 represents a 16-bit coordinate pair.
+type Coords16 struct {
+	X int16
+	Y int16
+}
+
+// AnimCmd is a union-like struct for animation commands.
+type AnimCmd struct {
+	Type  int16
+	Frame *AnimFrameCmd
+	Loop  *AnimLoopCmd
+	Jump  *AnimJumpCmd
+}
+
+// AnimFrameCmd represents a single frame in an animation.
+type AnimFrameCmd struct {
+	ImageValue int16
+	FrameDelay int16
+	XOffset    int16
+	YOffset    int16
+	HFlip      int16
+	VFlip      int16
+}
+
+// AnimLoopCmd represents a loop command in an animation script.
+type AnimLoopCmd struct {
+	Type     int16
+	JumpDest int16
+}
+
+// AnimJumpCmd represents a jump command in an animation script.
+type AnimJumpCmd struct {
+	Type     int16
+	JumpDest int16
 }
 
 func ParseTrainersBytes(offset int, count int) []*Trainer {
@@ -163,6 +222,38 @@ func (t *TrainerMon) loadFromDataSection(section []byte) {
 	// 4 bits of padding
 
 	t.Tags = binary.LittleEndian.Uint32(section[31:35])
+}
+
+func ParseTrainerSpritesBytes(offset int, count int) []*TrainerSprite {
+	trainerSprites := make([]*TrainerSprite, 0)
+	for i := 0; i < count; i++ {
+		trainerSprites = append(trainerSprites, &TrainerSprite{})
+		trainerSprites[i].loadFromDataSection(Data[offset+i*Config.TrainerSpriteStructSize : offset+i*Config.TrainerSpriteStructSize+Config.TrainerSpriteStructSize])
+	}
+	return trainerSprites
+}
+
+func (t *TrainerSprite) loadFromDataSection(section []byte /* 25 + 3 + 4 bytes */) {
+	t.YOffset = uint8(section[0])
+	// 3 bytes of padding
+	frontPicDataPtr := binary.LittleEndian.Uint32(section[4:8]) - POINTER_OFFSET
+	t.FrontPic = CompressedSpriteSheet{
+		DataPtr: frontPicDataPtr,
+		Size:    binary.LittleEndian.Uint16(section[8:10]),
+		Tag:     binary.LittleEndian.Uint16(section[10:12]),
+	}
+	paletteDataPtr := binary.LittleEndian.Uint32(section[12:16]) - POINTER_OFFSET
+	t.Palette = CompressedSpritePalette{
+		DataPtr: paletteDataPtr,
+		Tag:     binary.LittleEndian.Uint16(section[16:18]),
+	}
+	t.AnimCmdPtr = binary.LittleEndian.Uint32(section[18:22]) - POINTER_OFFSET
+	t.MugshotCoords = Coords16{
+		X: int16(binary.LittleEndian.Uint16(section[22:24])),
+		Y: int16(binary.LittleEndian.Uint16(section[24:26])),
+	}
+	t.MugshotRotation = int16(binary.LittleEndian.Uint16(section[26:28]))
+	// 4 more bytes of padding (i have no fucking clue why the compiler aligns with 4 more here)
 }
 
 /*  [hp, atk, def, speed, spatk, spdef] */
