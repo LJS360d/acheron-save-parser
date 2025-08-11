@@ -160,7 +160,7 @@ func DecompressLZ77(input []byte) ([]byte, error) {
 	return decompressed.Bytes(), nil
 }
 
-func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, width, height int, transparentBg bool) error {
+func NewImageFrom4bppBytes(bytes []byte, palette []color.Color, width, height int, transparentBg bool) *image.Paletted {
 	img := image.NewPaletted(image.Rect(0, 0, width, height), palette)
 
 	// Set transparency for the first color in the palette
@@ -206,6 +206,11 @@ func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, wi
 			}
 		}
 	}
+	return img
+}
+
+func Save4bppImageBytes(bytes []byte, savename string, palette []color.Color, width, height int, transparentBg bool) error {
+	img := NewImageFrom4bppBytes(bytes, palette, width, height, transparentBg)
 
 	savePath := savename + ".png"
 	err := os.MkdirAll(filepath.Dir(savePath), 0755)
