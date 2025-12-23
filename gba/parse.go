@@ -1,10 +1,10 @@
 package gba
 
 import (
-	"acheron-save-parser/utils"
 	"encoding/binary"
 	"fmt"
 	"log"
+	"rom-parser/utils"
 )
 
 // header originally defined in 3 parts:
@@ -225,6 +225,7 @@ func LoadGbaData(data []byte /* 33'554'432 Bytes */, versionExtra string) *GbaHe
 		Config = utils.Merge(Config, GetGbaConfig(versionExtra))
 		log.Printf("With loaded extra: '%s'\n", Config.Match)
 	}
+	log.Printf("%+v\n", Config)
 
 	Abilities = ParseAbilitiesBytes(int(Header.AbilitiesPtr), int(Header.AbilitiesCount))
 	log.Println("Loaded abilities")

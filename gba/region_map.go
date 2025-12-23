@@ -1,9 +1,9 @@
 package gba
 
 import (
-	"acheron-save-parser/utils"
 	"encoding/binary"
 	"log"
+	"rom-parser/utils"
 )
 
 type MapHeader struct {

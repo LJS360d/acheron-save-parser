@@ -1,12 +1,12 @@
 package main
 
 import (
-	"acheron-save-parser/gba"
-	"acheron-save-parser/memmap"
-	"acheron-save-parser/sav"
 	"flag"
 	"log"
 	"os"
+	"rom-parser/gba"
+	"rom-parser/memmap"
+	"rom-parser/sav"
 	"slices"
 	"strings"
 	"sync"

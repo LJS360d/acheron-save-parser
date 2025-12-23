@@ -1,8 +1,8 @@
 package gba
 
 import (
-	"acheron-save-parser/utils"
 	"regexp"
+	"rom-parser/utils"
 	"strings"
 )
 
@@ -90,8 +90,8 @@ var (
 			TrainerSpritesCount:       93,
 		},
 		"acheron-emerald": GbaConfig{
-			MapGroupCounts:       []int{58, 5, 5, 6, 7, 8, 9, 7, 7, 14, 8, 17, 10, 23, 13, 15, 15, 2, 2, 2, 3, 1, 1, 1, 108, 61, 89, 2, 1, 13, 1, 1, 3, 1, 0},
-			RegionLocationsCount: 214,
+			MapGroupCounts:       []int{58, 5, 5, 6, 7, 8, 9, 7, 7, 14, 8, 17, 10, 23, 13, 15, 15, 2, 2, 2, 3, 1, 1, 1, 111, 61, 89, 2, 1, 13, 1, 1, 3, 1, 0},
+			RegionLocationsCount: 216,
 		},
 	}
 )

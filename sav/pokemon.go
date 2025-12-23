@@ -1,11 +1,11 @@
 package sav
 
 import (
-	"acheron-save-parser/gba"
-	"acheron-save-parser/utils"
 	"encoding/binary"
 	"fmt"
 	"math"
+	"rom-parser/gba"
+	"rom-parser/utils"
 	"strings"
 )
 

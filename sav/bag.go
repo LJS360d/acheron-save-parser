@@ -1,8 +1,8 @@
 package sav
 
 import (
-	"acheron-save-parser/gba"
 	"encoding/binary"
+	"rom-parser/gba"
 )
 
 type Bag struct {

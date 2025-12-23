@@ -1,8 +1,8 @@
 package sav
 
 import (
-	"acheron-save-parser/utils"
 	"encoding/binary"
+	"rom-parser/utils"
 )
 
 type PC struct {

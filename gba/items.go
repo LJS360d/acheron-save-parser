@@ -1,8 +1,8 @@
 package gba
 
 import (
-	"acheron-save-parser/utils"
 	"encoding/binary"
+	"rom-parser/utils"
 )
 
 type ItemData struct {

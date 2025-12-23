@@ -22,15 +22,18 @@ WASM_BUILDFLAGS = $(SET_ENV) GOOS=js$(SEP) $(SET_ENV) GOARCH=wasm$(SEP)
 all: cmp
 
 USE_GBA_FILE_OUR := test/gba/acheron-emerald.gba
+USE_MAP_FILE_OUR := test/memmap/acheron-emerald.map
 USE_OUTPUTS := species,evolutions,moves,learnsets,items,encounters,trainers
 USE_JBP_OUR := our_
 VEXTRA := acheron-emerald
 
 USE_GBA_FILE_RHH := test/gba/rhh1.11.8.gba
+USE_MAP_FILE_RHH := test/memmap/rhh1.11.8.map
 USE_JBP_OUR := rhh_
-use: $(BUILDPATH)
-	$(BUILDPATH) -gba='$(USE_GBA_FILE_OUR)' -o='$(USE_OUTPUTS)' -jbp=$(USE_JBP_OUR) -vextra=$(VEXTRA)
-	$(BUILDPATH) -gba='$(USE_GBA_FILE_RHH)' -o='$(USE_OUTPUTS)' -jbp=$(USE_JBP_RHH)
+
+use: build
+	$(BUILDPATH) -gba='$(USE_GBA_FILE_OUR)' -map='$(USE_MAP_FILE_OUR)' -o='$(USE_OUTPUTS)' -jbp=$(USE_JBP_OUR) -vextra=$(VEXTRA)
+	$(BUILDPATH) -gba='$(USE_GBA_FILE_RHH)' -map='$(USE_MAP_FILE_RHH)' -o='$(USE_OUTPUTS)' -jbp=$(USE_JBP_RHH)
 
 BUILD_COMPARE := scripts/build_compare.go
 RES_DIR := build

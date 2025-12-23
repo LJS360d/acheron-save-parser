@@ -1,3 +1,3 @@
-module acheron-save-parser
+module rom-parser
 
-go 1.23.0
+go 1.25.5

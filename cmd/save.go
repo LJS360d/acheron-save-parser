@@ -1,9 +1,6 @@
 package main
 
 import (
-	jsonconvert "acheron-save-parser/export/json"
-	"acheron-save-parser/gba"
-	"acheron-save-parser/utils"
 	"bufio"
 	"encoding/binary"
 	"encoding/json"
@@ -12,6 +9,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	jsonconvert "rom-parser/export/json"
+	"rom-parser/gba"
+	"rom-parser/utils"
 	"strings"
 	"sync"
 )

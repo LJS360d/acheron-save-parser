@@ -1,8 +1,8 @@
 package gba
 
 import (
-	"acheron-save-parser/utils"
 	"encoding/binary"
+	"rom-parser/utils"
 )
 
 // MAX_TRAINER_ITEMS is the maximum number of items a trainer can have.
@@ -140,7 +140,7 @@ func (t *Trainer) loadFromDataSection(section []byte) {
 	partyOffset := binary.LittleEndian.Uint32(section[4:8]) - POINTER_OFFSET
 
 	// 0x08: u16 items[MAX_TRAINER_ITEMS]
-	for i := 0; i < MAX_TRAINER_ITEMS; i++ {
+	for i := range MAX_TRAINER_ITEMS {
 		t.Items[i] = binary.LittleEndian.Uint16(section[8+2*i : 10+2*i])
 	}
 
@@ -171,11 +171,11 @@ func (t *Trainer) loadFromDataSection(section []byte) {
 
 	// load party
 	if partyOffset != 0 {
-		for i := 0; i < int(t.PartySize); i++ {
-			mon := TrainerMon{}
-			mon.loadFromDataSection(Data[partyOffset+uint32(i*Config.TrainerMonStructSize) : partyOffset+uint32(i*Config.TrainerMonStructSize+Config.TrainerMonStructSize)])
-			t.Party = append(t.Party, mon)
-		}
+		// for i := 0; i < int(t.PartySize); i++ {
+		// 	mon := TrainerMon{}
+		// 	mon.loadFromDataSection(Data[partyOffset+uint32(i*Config.TrainerMonStructSize) : partyOffset+uint32(i*Config.TrainerMonStructSize+Config.TrainerMonStructSize)])
+		// 	t.Party = append(t.Party, mon)
+		// }
 	}
 }
 
@@ -183,13 +183,13 @@ func (t *TrainerMon) loadFromDataSection(section []byte) {
 	t.Nickname = utils.DecodePointerString(section, binary.LittleEndian.Uint32(section[0:4]))
 	evsPtr := binary.LittleEndian.Uint32(section[4:8]) - POINTER_OFFSET
 	if evsPtr != 0 && evsPtr != NULL_POINTER {
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			t.Ev[i] = binary.LittleEndian.Uint32(Data[evsPtr+uint32(i*4) : evsPtr+uint32(i*4+4)])
 		}
 	}
 
 	t.Iv = UnpackIVs(binary.LittleEndian.Uint32(section[8:12]))
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		move := binary.LittleEndian.Uint16(section[12+2*i : 14+2*i])
 		t.Moves = append(t.Moves, move)
 	}
@@ -226,7 +226,7 @@ func (t *TrainerMon) loadFromDataSection(section []byte) {
 
 func ParseTrainerSpritesBytes(offset int, count int) []*TrainerSprite {
 	trainerSprites := make([]*TrainerSprite, 0)
-	for i := 0; i < count; i++ {
+	for i := range count {
 		trainerSprites = append(trainerSprites, &TrainerSprite{})
 		trainerSprites[i].loadFromDataSection(Data[offset+i*Config.TrainerSpriteStructSize : offset+i*Config.TrainerSpriteStructSize+Config.TrainerSpriteStructSize])
 	}

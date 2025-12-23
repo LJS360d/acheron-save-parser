@@ -1,7 +1,7 @@
 package gba_test
 
 import (
-	"acheron-save-parser/gba"
+	"rom-parser/gba"
 	"testing"
 )
 

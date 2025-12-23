@@ -1,10 +1,10 @@
 package main
 
 import (
-	jsconvert "acheron-save-parser/export/js"
-	"acheron-save-parser/gba"
-	"acheron-save-parser/sav"
 	"log"
+	jsconvert "rom-parser/export/js"
+	"rom-parser/gba"
+	"rom-parser/sav"
 	"syscall/js"
 )
 
